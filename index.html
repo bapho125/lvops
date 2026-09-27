@@ -1825,7 +1825,10 @@ function openSettings(){ const st=S.settings=S.settings||{}; const cur=st.brand|
   <div class="fld"><span class="lb">スプシとの接続</span>${SERVER?`<p class="hint" style="margin-top:0">つながっています（この端末の人：${esc((getConf()||{}).user||'未設定')}）</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" id="set-pull">スプシから読み直す</button><button type="button" class="btn sm" id="set-push">今の内容を保存</button><button type="button" class="btn sm" id="set-conn">つなぎ直す</button></div>`
     :`<p class="hint" style="margin-top:0">まだスプシにつながっていません。今のデータはこの端末の中だけにあります。</p><button type="button" class="btn sm primary" id="set-conn">スプシにつなぐ</button>`}</div>
+  <div class="fld"><span class="lb">データを取り込む</span><div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn sm" style="display:inline-flex;align-items:center;cursor:pointer">ファイルを選ぶ<input type="file" id="set-imp" accept=".json,application/json" hidden></label></div>
+    <p class="hint">NotionなどからLv.OPSの形に変換したデータ（.json）を取り込みます。パソコンで開いたLv.OPSから行うのがおすすめです。</p></div>
   <div class="acts"><span></span><button class="btn primary" id="set-ok">閉じる</button></div>`);
+  $('set-imp').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ openImport(JSON.parse(r.result)); }catch(err){ toast('ファイルを読み込めませんでした'); } }; r.readAsText(f); };
   if($('set-pull')) $('set-pull').onclick=()=>{ closeSheet(); dirty=false; pullSync(true); toast('スプシから読み直しています'); };
   if($('set-push')) $('set-push').onclick=()=>{ pushSync(); toast('保存しています'); };
   if($('set-conn')) $('set-conn').onclick=()=>openConnect(null);
@@ -2287,6 +2290,24 @@ function startApp(){
   setTimeout(()=>openConnect(fromLink),300); }
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 
+
+/* ---------- データの取り込み（Notionなどから変換したもの） ---------- */
+function openImport(o){ if(!o||!Array.isArray(o.projects)){ toast('Lv.OPSの取り込み用データではありません'); return; }
+  const money=(o.projects||[]).reduce((a,p)=>a+(p.extras||[]).length,0);
+  openSheet(`<h3>データを取り込む</h3>
+  <div class="pvlist"><div><b>元データ</b><span>${esc(o._source||'（不明）')}</span></div><div><b>案件</b><span>${o.projects.length}件（お金の記録 ${money}件）</span></div>
+  <div><b>元請け</b><span>${(o.clients||[]).length}社</span></div><div><b>手配先</b><span>${(o.vendors||[]).length}件</span></div>
+  <div><b>請求・支払の状況</b><span>${Object.keys(o.bills||{}).length}件・${Object.keys(o.pays||{}).length}件</span></div></div>
+  <label class="chk"><input type="checkbox" id="im-rep" checked><span>今入っているデータを消してから取り込む<small>案件・タスク・お金・経費を空にしてから入れます。会社情報・決算月・色などの設定は残ります。サンプルが入っているときはオンのままにしてください。</small></span></label>
+  <div class="acts" style="margin-top:12px"><button class="btn" id="im-no">やめる</button><button class="btn primary" id="im-go">取り込む</button></div>`);
+  $('im-no').onclick=closeSheet;
+  $('im-go').onclick=()=>{ snap(); const rep=$('im-rep').checked;
+    if(rep){ const keep={}; ['settings','msgTpl','headLearn'].forEach(k=>{ if(S[k]!==undefined) keep[k]=S[k]; }); S=Object.assign({projects:[],tasks:[],clients:[],vendors:[],expenses:[],bills:{},pays:{}},keep); }
+    const up=(arr,src,key)=>{ (src||[]).forEach(x=>{ const i=arr.findIndex(y=>y[key]===x[key]); if(i>=0) arr[i]=x; else arr.push(x); }); };
+    S.projects=S.projects||[]; S.tasks=S.tasks||[]; S.clients=S.clients||[]; S.vendors=S.vendors||[]; S.expenses=S.expenses||[];
+    up(S.projects,o.projects,'id'); up(S.clients,o.clients,'id'); up(S.vendors,o.vendors,'name'); up(S.tasks,o.tasks,'id'); up(S.expenses,o.expenses,'id');
+    S.bills=Object.assign(S.bills||{},o.bills||{}); S.pays=Object.assign(S.pays||{},o.pays||{});
+    ensureFy(); save(); closeSheet(); render(); toast(`取り込みました（案件${o.projects.length}件）`,true); }; }
 function openSearch(){
   openSheet(`<h3>さがす</h3><div class="search"><input id="q" type="search" placeholder="タスク名、案件名、メモ、経費で検索" aria-label="検索"></div><div id="qres" style="margin-top:12px"></div>`);
   const q=$('q'); setTimeout(()=>q.focus(),250);
