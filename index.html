@@ -1087,12 +1087,20 @@ body{line-break:strict}
 .tlbar{margin:10px 0}
 .tlbar .tlmode{display:inline-flex;max-width:100%}
 .tlbar .tlmode button{height:34px;padding:0 16px;font-size:13px}
+.gzen{position:absolute;top:calc(50% - 12px);left:2px;right:2px;height:24px;border-radius:6px;border:1px solid var(--blue);background:color-mix(in oklab,var(--blue) 22%,var(--card));color:var(--blue);font-size:10px;font-weight:700;z-index:2;cursor:pointer;padding:0;white-space:nowrap;overflow:hidden}
+.gzen.done{border-color:var(--faint);color:var(--sub);background:var(--card)}.gzen.late{border-color:var(--fatal);color:var(--fatal)}
+.lg.zen{border:1px solid var(--blue);background:color-mix(in oklab,var(--blue) 22%,transparent)}
+.tl{--labw:96px}
+@media (min-width:1024px){ .tl{--labw:190px} }
+.gbar{overflow:clip}
+.gbar span{position:sticky;left:calc(var(--labw) + 6px)}
+.sync{cursor:pointer}
 </style>
 </head>
 <body>
 
 <header class="hd">
-  <div><div class="wordmark" aria-label="Lv.OPS"><svg class="lvword" viewBox="0 0 524 110" aria-label="Lv.OPS" role="img"><path d="M12 10 V92 H66" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square"/><path d="M88 40 L123.0 100 L158 40 L130.5 40 L123.0 64.8 L115.5 40 Z" fill="currentColor"/><circle class="lvdot" cx="172" cy="91" r="11"/><g fill="none" stroke="currentColor" stroke-width="18" stroke-linecap="butt" stroke-linejoin="miter" class="lvops"><path d="M216 10 H261.73333333333335 L281.73333333333335 30 V80 L261.73333333333335 100 H216 L196 80 V30 Z"/><path d="M312.1333333333333 100 V10 H372.2933333333333 L389.2933333333333 27.0 V45.199999999999996 L372.2933333333333 62.199999999999996 H312.1333333333333"/><path d="M514.0 10 H445.26666666666665 L428.26666666666665 27.0 V38.0 L445.26666666666665 55.0 H497.0 L514.0 72.0 V83.0 L497.0 100 H428.26666666666665"/></g></svg></div><h1 id="hTitle">今日</h1><div class="date" id="hDate"></div><div class="sync" id="syncSt"></div></div>
+  <div><div class="wordmark" aria-label="Lv.OPS"><svg class="lvword" viewBox="0 0 524 110" aria-label="Lv.OPS" role="img"><path d="M12 10 V92 H66" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square"/><path d="M88 40 L123.0 100 L158 40 L130.5 40 L123.0 64.8 L115.5 40 Z" fill="currentColor"/><circle class="lvdot" cx="172" cy="91" r="11"/><g fill="none" stroke="currentColor" stroke-width="18" stroke-linecap="butt" stroke-linejoin="miter" class="lvops"><path d="M216 10 H261.73333333333335 L281.73333333333335 30 V80 L261.73333333333335 100 H216 L196 80 V30 Z"/><path d="M312.1333333333333 100 V10 H372.2933333333333 L389.2933333333333 27.0 V45.199999999999996 L372.2933333333333 62.199999999999996 H312.1333333333333"/><path d="M514.0 10 H445.26666666666665 L428.26666666666665 27.0 V38.0 L445.26666666666665 55.0 H497.0 L514.0 72.0 V83.0 L497.0 100 H428.26666666666665"/></g></svg></div><h1 id="hTitle">今日</h1><div class="date" id="hDate"></div><div class="sync" id="syncSt" data-act="syncNow" tabindex="0"></div></div>
   <div style="display:flex;gap:8px"><button class="iconbtn" id="setBtn" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   <button class="iconbtn" id="searchBtn" aria-label="タスクを検索"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
 </header>
@@ -1545,20 +1553,31 @@ function renderTime(){
   const bar=(a,b,cls,text,act)=>(i)=>{ if(i!==Math.max(0,a)||a>b||b<0||a>=total) return ''; const s=Math.max(0,a), e=Math.min(total-1,b); const wpx=(e-s+1)*W-6; return `<div class="gbar ${cls}" style="width:${wpx}px" title="${esc(text||'')}" ${act||''}><span>${wpx>=64?(text||''):''}</span></div>`; };
   const sep=txt=>`<div class="tr tsep"><div class="lab">${esc(txt)}</div><div class="sepfill" style="width:${total*W}px"></div></div>`;
   if(tlMode==='proj'){
-    const live=ps.filter(p=>!endedTag(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate)), done=ps.filter(p=>endedTag(p)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
-    const row=p=>{ const ts=S.tasks.filter(k=>k.projectId===p.id), firstT=ts.reduce((m,k)=>{ const s0=k.due&&k.due<taskStart(k)?k.due:taskStart(k); return s0<m?s0:m; },p.showDate);
-      const prepA=idx(firstT<p.showDate?firstT:iso(add(fromIso(p.showDate),-14))), showA=idx(p.showDate), showB=idx(projEnd(p));
+    const haiSlots=p=>(p.slots||[]).filter(x=>!isSelfSlot(x));
+    const hasHai=p=>haiSlots(p).length>0, hasSelfW=p=>(p.slots||[]).some(isSelfSlot);
+    const filledAll=p=>haiSlots(p).every(x=>filledN(x)>=(+x.need||0));
+    const row=p=>{ const showA=idx(p.showDate), showB=idx(projEnd(p)), tag=endedTag(p), sd=dd(fromIso(p.showDate),t);
+      const bars=[];
+      // 準備：スタッフの手配があるときだけ、案件を入れた日から本番の前日まで。手配が埋まったら消える
+      if(hasHai(p)&&!filledAll(p)&&!tag){ const c0=p.createdAt?iso(new Date(+p.createdAt)):n; bars.push(bar(idx(c0<p.showDate?c0:iso(add(fromIso(p.showDate),-1))),showA-1,'g-prep','準備（手配中 '+haiSlots(p).reduce((a,x)=>a+Math.min(filledN(x),+x.need||0),0)+'/'+haiSlots(p).reduce((a,x)=>a+(+x.need||0),0)+'名）',`data-act="gotoProj" data-pid="${p.id}"`)); }
+      bars.push(bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`));
       const c=clientOf(p), st=c?(((S.bills||{})[c.id+'|'+billMonthOf(p,c)]||{})):{};
       const billed=st.status&&st.status!=='未請求', billEnd=billed?(st.dates&&st.dates['請求済']?idx(st.dates['請求済']):showB+1):Math.max(showB+1,idx(n));
-      const hasBill=projMoney(p).sale>0; const tag=endedTag(p), sd=dd(fromIso(p.showDate),t);
-      const bars=[bar(prepA,showA-1,'g-prep','準備',`data-act="gotoProj" data-pid="${p.id}"`),bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`)];
-      if(hasBill&&!(billed&&billEnd<=showB)) bars.push(bar(showB+1,billEnd,billed?'g-bill g-done':'g-bill','請求'+(billed?'済':'まだ'),`data-act="moneyFor" data-pid="${p.id}"`));
-      return cellRow(`<button type="button" class="labbtn" data-act="gotoProj" data-pid="${p.id}">${esc(short(p))}<small>${tag?`<span class="${/請求/.test(tag)?'bp':''}">${tag}</span>`:(sd<=0?'本番中':'本番 D-'+sd)}</small></button>`,i=>bars.map(f=>f(i)).join(''),tag?'ended':''); };
-    h+=live.map(row).join('');
-    if(done.length){ h+=sep(`終わった案件（${done.length}件）`)+done.map(row).join(''); }
+      if(projMoney(p).sale>0&&!(billed&&billEnd<=showB)) bars.push(bar(showB+1,billEnd,billed?'g-bill g-done':'g-bill','請求'+(billed?'済':'まだ'),`data-act="moneyFor" data-pid="${p.id}"`));
+      // 前確：送る日に印
+      let zenI=-1, zenCls='';
+      if(needsZen(p)&&!tag){ zenI=idx(zenDate(p)); const zk=S.tasks.find(k=>k.projectId===p.id&&k.tag==='前確'); zenCls=zk&&zk.status==='done'?'done':(zenDate(p)<n?'late':''); }
+      const zenMark=i=>i===zenI?`<button type="button" class="gzen ${zenCls}" data-act="zen" data-pid="${p.id}" title="前確を送る日">前確${zenCls==='done'?' ✓':''}</button>`:'';
+      return cellRow(`<button type="button" class="labbtn" data-act="gotoProj" data-pid="${p.id}">${esc(short(p))}<small>${tag?`<span class="${/請求/.test(tag)?'bp':''}">${tag}</span>`:(sd<=0?'本番中':'本番 D-'+sd)}</small></button>`,i=>bars.map(f=>f(i)).join('')+zenMark(i),tag?'ended':''); };
+    const live=ps.filter(p=>!endedTag(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate)), done=ps.filter(p=>endedTag(p)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
+    const gSelf=live.filter(hasSelfW), gHai=live.filter(p=>!hasSelfW(p)&&hasHai(p)), gOther=live.filter(p=>!hasSelfW(p)&&!hasHai(p));
+    if(gSelf.length) h+=sep(`自分が入る現場（${gSelf.length}件）`)+gSelf.map(row).join('');
+    if(gHai.length) h+=sep(`手配のみの現場（${gHai.length}件）`)+gHai.map(row).join('');
+    if(gOther.length) h+=sep(`そのほか（${gOther.length}件）`)+gOther.map(row).join('');
+    if(done.length) h+=sep(`終わった案件（${done.length}件）`)+done.map(row).join('');
     if(!ps.length) h+=sep('表示する案件はありません');
   } else {
-    const groups={}; open.forEach(k=>{ (groups[k.projectId||'']=groups[k.projectId||'']||[]).push(k); });
+    const groups={}; open.filter(k=>k.tag!=='前確').forEach(k=>{ (groups[k.projectId||'']=groups[k.projectId||'']||[]).push(k); });
     const order=Object.keys(groups).sort((a,b)=>{ const pa=P(a), pb=P(b); return (pa?pa.showDate:'9999').localeCompare(pb?pb.showDate:'9999'); });
     order.forEach(pid=>{ const p=P(pid); h+=sep(p?short(p):'案件なし');
       groups[pid].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).forEach(k=>{
@@ -1569,7 +1588,7 @@ function renderTime(){
     if(!open.length) h+=sep('残っているタスクはありません');
   }
   const tl=$('tl'); tl.style.gridTemplateColumns=''; tl.innerHTML=h; tl.dataset.today=String(dd(t,start));
-  $('tlLegend').innerHTML=tlMode==='proj'?'<span><i class="lg prep"></i>準備</span><span><i class="lg show"></i>本番</span><span><i class="lg bill"></i>請求まだ</span><span><i class="lg billd"></i>請求済</span>'
+  $('tlLegend').innerHTML=tlMode==='proj'?'<span><i class="lg prep"></i>準備（スタッフ手配中）</span><span><i class="lg show"></i>本番</span><span><i class="lg zen"></i>前確を送る日</span><span><i class="lg bill"></i>請求まだ</span><span><i class="lg billd"></i>請求済</span>'
     :'<span><i class="lg tk"></i>未着手</span><span><i class="lg doing"></i>進行中</span><span><i class="lg wait"></i>返事待ち</span><span><i class="lg late"></i>期限切れ</span><span><i class="lg fatal"></i>至急</span>';
   scrollTlToday();
 }
@@ -1638,7 +1657,8 @@ function slotsBlock(p){ const sb=selfBlock(p); if(!(p.modules||[]).includes('手
     </div>${lines}
     <button class="addslot" data-act="slot" data-pid="${p.id}" data-sid="">＋ 手配の職種を追加</button></div>`+sb; }
 
-function render(){ try{ ensureZenTasks(); ensureReviewTasks(); }catch(e){ console.error(e); } renderToday(); renderTime(); renderBoard(); renderProjects(); renderMoney(); }
+function ensureProjCreated(){ let ch=false; S.projects.forEach(p=>{ if(!p.createdAt){ const ts=S.tasks.filter(k=>k.projectId===p.id&&k.createdAt).map(k=>+k.createdAt); p.createdAt=ts.length?Math.min(...ts):Date.now(); ch=true; } }); if(ch) save(); }
+function render(){ try{ ensureProjCreated(); ensureZenTasks(); ensureReviewTasks(); }catch(e){ console.error(e); } renderToday(); renderTime(); renderBoard(); renderProjects(); renderMoney(); }
 
 /* ---------- actions ---------- */
 function setStatus(k,st){ if(!k||k.status===st) return;
@@ -1659,6 +1679,7 @@ document.addEventListener('click',e=>{
   if(act==='zen') openZen(a.dataset.pid);
   if(act==='selfEdit') openSelf(a.dataset.pid,a.dataset.sid);
   if(act==='reviewSkip'){ const k=T(a.dataset.id); if(k){ snap(); const pj=P(k.projectId); if(pj){ pj.review=Object.assign({},pj.review||{},{skip:true}); } S.tasks=S.tasks.filter(x=>x.id!==k.id); save(); render(); toast('この案件の振り返りはなしにしました',true); } }
+  if(act==='syncNow'){ if(!SERVER){ openConnect(null); return; } setSync('busy','同期中…'); if(dirty) pushSync(); else pullSync(true); return; }
   if(act==='tlMode'){ tlMode=a.dataset.m; renderTime(); return; }
   if(act==='moneyFor'){ openProjMoney(a.dataset.pid); return; }
   if(act==='tlToday'){ const tl=$('tl'), w=tl.parentElement; w.scrollTo({left:Math.max(0,+(tl.dataset.today||0)*38-38*3),behavior:'smooth'}); }
@@ -2580,7 +2601,7 @@ function api(action,payload){ const c=getConf(); if(!c) return Promise.reject(ne
   return fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:c.key,action,user:c.user||''},payload||{}))})
     .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(j=>{ if(j&&j.error) throw new Error(j.error); return j; }); }
 let SCHEMA_=null, lastT=null, syncing=false, dirty=false, syncTimer=null;
-function setSync(st,msg){ const el=$('syncSt'); if(!el) return; el.className='sync '+st; el.textContent=msg; }
+function setSync(st,msg){ const el=$('syncSt'); if(!el) return; const hm=new Date().toTimeString().slice(0,5); el.className='sync '+st; el.textContent=(st==='ok'?msg.replace(/^(最新です|保存済み)$/,'$1 '+hm):msg); el.setAttribute('role','button'); el.title='押すと今すぐスプシと同期します'; }
 function flatS(src){ const T={projects:{},slots:{},people:{},extras:{},tasks:{},clients:{},vendors:{},expenses:{},docs:{},bills:{},pays:{},meta:{}};
   (src.projects||[]).forEach(p=>{ const r=Object.assign({},p); delete r.slots; delete r.extras; T.projects[p.id]=r;
     (p.slots||[]).forEach((s,i)=>{ if(!s.id) s.id=uid(); const r2=Object.assign({},s,{projectId:p.id,order:i}); delete r2.people; T.slots[s.id]=r2;
@@ -2623,7 +2644,7 @@ function pushSync(){ if(!SERVER||!SCHEMA_) return; if(syncing){ scheduleSync(); 
     Object.keys(lastT[t]||{}).forEach(id=>{ if(!(id in N[t])) del.push(id); }); if(up.length||del.length){ patch[t]={up,del}; n+=up.length+del.length; } });
   dirty=false; if(!n){ markPending(false); setSync('ok','保存済み'); return; }
   syncing=true; setSync('busy','保存中…');
-  api('applyPatch',{patch}).then(()=>{ syncing=false; lastT=N; persistBase(); if(dirty) scheduleSync(); else { markPending(false); setSync('ok','保存済み'); } })
+  api('applyPatch',{patch}).then(()=>{ syncing=false; lastT=N; persistBase(); if(dirty) scheduleSync(); else { markPending(false); setSync('ok','保存済み'); setTimeout(()=>pullSync(),1500); } })
     .catch(err=>{ syncing=false; dirty=true; markPending(true); setSync('err',/合言葉/.test(err.message)?'合言葉が違います（設定でつなぎ直し）':'未保存（電波が戻ったら送ります）'); clearTimeout(syncTimer); syncTimer=setTimeout(pushSync,15000); }); }
 function pullSync(force){ if(!SERVER||syncing||dirty) return;
   api('loadAll').then(d=>{ SCHEMA_=d.schema; const S2=unflatS(d.rows); const N=normAll(flatS(S2));
@@ -2638,8 +2659,10 @@ function bootServer(){
   const pending=!!localStorage.getItem(PEND_KEY);
   if(cache&&base&&base.schema){ S=cache; SCHEMA_=base.schema; lastT=base.lastT; ensureFy(); applySettings(); render(); setSync('busy','確認中…'); }
   else { const ov=$('bootOv'); if(ov) ov.hidden=false; setSync('busy','読み込み中…'); }
-  const after=()=>{ document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ if(dirty) pushSync(); else pullSync(); } });
-    window.addEventListener('online',()=>{ if(dirty) pushSync(); else pullSync(); }); setInterval(()=>{ if(!document.hidden&&!dirty) pullSync(); },90000); };
+  const after=()=>{ const wake=()=>{ if(dirty) pushSync(); else pullSync(); };
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) wake(); });
+    window.addEventListener('focus',wake); window.addEventListener('pageshow',wake);
+    window.addEventListener('online',wake); setInterval(()=>{ if(!document.hidden&&!dirty&&!syncing) pullSync(); },20000); };
   if(cache&&base&&base.schema&&pending){ dirty=true; pushSync(); after(); return; }
   api('loadAll').then(d=>{ const ov=$('bootOv'); if(ov) ov.hidden=true; SCHEMA_=d.schema; const empty=Object.values(d.rows).every(a=>!a.length);
       if(empty){ lastT={}; Object.keys(normAll(flatS(emptyState()))).forEach(t=>lastT[t]={}); persistBase(); S=emptyState(); applySettings(); render(); setSync('ok','スプシとつながりました'); openOnboard(); after(); return; }
@@ -2684,7 +2707,7 @@ function startApp(){
   if(h){ fromLink=parseCode(decodeURIComponent(h[1])); history.replaceState(null,'',location.pathname+location.search); }
   if(fromLink && isStandalone()){ setConf(Object.assign(getConf()||{},fromLink)); SERVER=true; }
   if(SERVER){ S=emptyState(); bootServer(); return; }
-  load(); ensureFy(); applySettings(); render();
+  load(); ensureFy(); applySettings(); render(); setSync('err','スプシ未接続（この端末だけ）');
   setTimeout(()=>openConnect(fromLink),300); }
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 
@@ -2992,7 +3015,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29b';
+const APP_VER='2026.09.29d';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
