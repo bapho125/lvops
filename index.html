@@ -1025,9 +1025,9 @@ body{line-break:strict}
 .calq button:hover{background:var(--soft)}
 /* 予定：月の区切り線を一番下まで、今日をはっきり、今日へ戻るボタン */
 .tl .cell.m1{border-left:2px solid color-mix(in oklab,var(--teal) 70%,transparent)}
-.tl .cell.td{background:color-mix(in oklab,var(--blue) 16%,transparent)!important;box-shadow:inset 2px 0 0 var(--blue),inset -2px 0 0 var(--blue)}
-.tl .dh.td{background:color-mix(in oklab,var(--blue) 22%,transparent);box-shadow:inset 2px 0 0 var(--blue),inset -2px 0 0 var(--blue),inset 0 3px 0 var(--blue)}
-.tl .dh.td b{font-size:18px;padding:2px 4px}
+.tl .cell.td{background:color-mix(in oklab,var(--blue) 8%,transparent)!important;box-shadow:inset 1px 0 0 color-mix(in oklab,var(--blue) 55%,transparent),inset -1px 0 0 color-mix(in oklab,var(--blue) 55%,transparent)}
+.tl .dh.td{background:color-mix(in oklab,var(--blue) 12%,transparent);box-shadow:inset 1px 0 0 color-mix(in oklab,var(--blue) 55%,transparent),inset -1px 0 0 color-mix(in oklab,var(--blue) 55%,transparent),inset 0 2px 0 var(--blue)}
+.tl .dh.td b{font-size:16px;padding:1px 4px}
 .tl .dh.td::after{content:"今日";display:block;font-size:10px;font-weight:700;color:var(--blue);line-height:1.1}
 .tl .corner{display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
 .tlToday{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--blue);background:color-mix(in oklab,var(--blue) 14%,transparent);color:var(--blue);font-weight:700;font-size:12.5px;cursor:pointer}
@@ -1095,6 +1095,8 @@ body{line-break:strict}
 .gbar{overflow:clip}
 .gbar span{position:sticky;left:calc(var(--labw) + 6px)}
 .sync{cursor:pointer}
+.mlist .mrow .mr .chip+.chip{margin-top:2px}
+optgroup{font-weight:700;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -1124,7 +1126,7 @@ body{line-break:strict}
   </section>
   <section class="view" id="v-money"><div id="moneyBody"></div></section>
   <section class="view" id="v-proj">
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="addProj">案件を追加</button><button class="btn" id="pasteProj">募集文を貼って作る</button><button class="btn" data-act="library">資料庫</button></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="addProj">案件を追加</button><button class="btn" id="pasteProj">募集文を貼って作る</button><button class="btn" data-act="library">資料庫</button><button class="btn" data-act="partners">取引先</button></div>
     <p class="lead"><b>元請けから募集文が来たら</b>、下の入力欄か「募集文を貼って作る」にそのまま貼るだけで案件ができます。<b>手配先に送る募集文</b>は、各案件の「募集文を作る」から。</p>
     <div id="projList"></div>
     <div class="foot">この試作のデータは、この端末のブラウザの中にだけ保存されます。<br><button id="resetBtn">サンプルデータに戻す</button></div>
@@ -1686,6 +1688,9 @@ document.addEventListener('click',e=>{
   if(act==='sortInbox') openSort();
   if(act==='know') openKnow(a.dataset.pid);
   if(act==='library') openLibrary();
+  if(act==='partners') openPartners('c');
+  if(act==='clientEdit') openClientEdit(a.dataset.id);
+  if(act==='vendorEdit') openVendorEdit(a.dataset.name);
   if(act==='docEdit') openDocEdit(a.dataset.id,a.dataset.back);
   if(act==='zenAsk') openZenAsk(a.dataset.pid);
   if(act==='order') openOrder(a.dataset.pid);
@@ -1766,7 +1771,7 @@ function openTask(id){ const k=T(id); if(!k) return; closeSheet();
   const t=today(), q=[['今日',iso(t)],['明日',iso(add(t,1))],['明後日',iso(add(t,2))],['来週',iso(add(t,((1-t.getDay()+7)%7||7)))],['なし','']];
   openSheet(`<h3>タスクを整理</h3>
   <div class="fld"><label for="f-title">内容</label><textarea id="f-title">${esc(k.title)}</textarea></div>
-  <div class="fld"><label for="f-proj">案件</label><select id="f-proj"><option value="">案件なし</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===k.projectId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="f-proj">案件</label><select id="f-proj">${projOptions(k.projectId)}</select></div>
   <div class="fld"><label for="f-start">始める日（予定のタスク表示で、始める日から期日までを棒で表示します）</label><input id="f-start" type="date" value="${k.start||''}"></div>
   <div class="fld"><span class="lb">期日</span><div class="seg" id="f-q">${q.map(([l,v])=>`<button type="button" data-v="${v}" aria-pressed="${(k.due||'')===v}">${l}</button>`).join('')}</div>
     <input id="f-due" type="date" value="${k.due||''}" style="margin-top:8px" aria-label="期日を日付で選ぶ"></div>
@@ -2195,7 +2200,7 @@ function billsAll(){ const out={};
   S.projects.filter(p=>p.kind!=='long').forEach(p=>{ const c=clientOf(p), m=projMoney(p); if(!m.sale&&!m.cost) return;
     const bm=billMonthOf(p,c), key=(c?c.id:'_none')+'|'+bm; const b=out[key]=out[key]||{key,client:c,bm,projects:[],sale:0,cost:0};
     b.projects.push({p,m}); b.sale+=m.sale; b.cost+=m.cost; });
-  const arr=Object.values(out).map(b=>{ b.due=dueOf(b.bm,b.client); const st=(S.bills||{})[b.key]||{}; b.status=st.status||'未請求';
+  const arr=Object.values(out).map(b=>{ const st=(S.bills||{})[b.key]||{}; b.autoDue=dueOf(b.bm,b.client); b.due=(st.dates&&st.dates.due)||b.autoDue; b.status=st.status||'未請求';
     if(st.snap){ b.rsale=st.snap.sale; b.changed=st.snap.sale!==b.sale; } else b.rsale=b.sale; return b; });
   Object.entries(S.bills||{}).forEach(([k,st])=>{ if(st.snap && !out[k]) arr.push({key:k,client:{name:st.snap.client},bm:st.snap.bm,projects:[],sale:st.snap.sale,cost:st.snap.cost||0,rsale:st.snap.sale,due:st.snap.due,status:st.status||'請求済',orphan:true}); });
   return arr; }
@@ -2204,7 +2209,7 @@ function paysAll(){ const out={};
     const key=l.vendor+'|'+b.bm; const v=out[key]=out[key]||{key,vendor:l.vendor,bm:b.bm,amt:0,items:[],dues:[]}; v.amt+=l.amt; v.items.push({p,l}); v.dues.push(b.due); })));
   return Object.values(out).map(v=>{ const vm=(S.vendors||[]).find(x=>x.name===v.vendor); v.rule=(vm&&vm.rule)||'match';
     if(v.rule==='60'){ const [y,m]=v.bm.split('-').map(Number); v.due=iso(add(new Date(y,m-1,lastDay(y,m)),60)); } else v.due=v.dues.sort().slice(-1)[0];
-    const st=(S.pays||{})[v.key]||{}; v.status=st.status||'請求書待ち'; v.ramt=st.snap?st.snap.amt:v.amt; return v; }); }
+    const st=(S.pays||{})[v.key]||{}; v.autoDue=v.due; if(st.dates&&st.dates.due) v.due=st.dates.due; v.status=st.status||'請求書待ち'; v.ramt=st.snap?st.snap.amt:v.amt; return v; }); }
 function moneyAlerts(){ const n=iso(today()), out=[];
   billsAll().forEach(b=>{ const [y,m]=b.bm.split('-').map(Number); const close=iso(new Date(y,m-1,lastDay(y,m)));
     if(b.status==='未請求' && n>iso(add(fromIso(close),3))) out.push({lv:dd(today(),fromIso(close))>=14?'fatal':'crit',kind:'bill',key:b.key,title:`${cname(b.client)}　${m}月分の請求がまだです`,amt:b.sale+tax(b.sale)});
@@ -2264,7 +2269,7 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   const per=moneyPeriod, months=periodMonths(moneyMonth,per), lab=periodLabel(moneyMonth,per);
   const segP=`<div class="seg mper">${[['month','月'],['q','四半期'],['fy','年度']].map(([v,l])=>`<button type="button" data-act="mPer" data-p="${v}" aria-pressed="${per===v}">${l}</button>`).join('')}</div>`;
   const nav=`<div class="mnav"><button class="iconbtn" data-act="mPrev" aria-label="前へ">‹</button><div class="mt"><b>${lab.main}</b>${lab.sub?`<span>${lab.sub}</span>`:''}</div><button class="iconbtn" data-act="mNext" aria-label="次へ">›</button></div>`;
-  const tools=`<div class="mtools"><button class="btn sm" data-act="expenses">毎月の経費</button><button class="btn sm" data-act="clients">元請けの締め・入金日</button><button class="btn sm" data-act="vendorsSet">手配先の設定</button><button class="btn sm" data-act="fySet">決算月（今は${fyEnd()}月）</button><button class="btn sm" data-act="backup">バックアップ</button></div>`;
+  const tools=`<div class="mtools"><button class="btn sm" data-act="expenses">毎月の経費</button><button class="btn sm" data-act="partners">取引先（元請け・手配先）</button><button class="btn sm" data-act="fySet">決算月（今は${fyEnd()}月）</button><button class="btn sm" data-act="backup">バックアップ</button></div>`;
   if(per!=='month'){ const r=reportFor(months); const prevAnchor=shiftM(moneyMonth,per==='q'?-3:-12); const pr=reportFor(periodMonths(prevAnchor,per));
     const cl=r.byC.sort((a,b)=>b.sale-a.sale), vl=r.byV.sort((a,b)=>b.cost-a.cost), pl=r.byP.sort((a,b)=>b.gross-a.gross);
     el.innerHTML=segP+nav+`
@@ -2319,7 +2324,7 @@ function openExpenses(){ S.expenses=S.expenses||[]; const cm=iso(today()).slice(
 function openExpEdit(id){ const x=(S.expenses||[]).find(e=>e.id===id); if(!x) return;
   openSheet(`<h3>経費</h3>
   <div class="row2"><div class="fld" style="flex:2"><label for="xe-l">内容</label><input id="xe-l" value="${esc(x.label)}"></div><div class="fld"><label for="xe-a">金額（税込・レシートの額）</label><input id="xe-a" type="number" inputmode="numeric" value="${esc(x.amount)}"></div></div>
-  <div class="row2"><div class="fld"><label for="xe-d">日付</label><input id="xe-d" type="date" value="${esc(x.date||'')}"></div><div class="fld"><label for="xe-p">案件</label><select id="xe-p"><option value="">案件なし（会社の経費）</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===x.projectId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div>
+  <div class="row2"><div class="fld"><label for="xe-d">日付</label><input id="xe-d" type="date" value="${esc(x.date||'')}"></div><div class="fld"><label for="xe-p">案件</label><select id="xe-p">${projOptions(x.projectId,'案件なし（会社の経費）')}</select></div></div>
   <div class="fld"><span class="lb">勘定科目（自動で推測しています）</span><div class="seg" id="xe-c">${ACCTS.map(c=>`<button type="button" data-c="${c}" aria-pressed="${x.acct===c}">${c}</button>`).join('')}</div></div>
   ${x.raw?`<div class="fld"><span class="lb">入力したときの原文</span><div class="raw">${esc(x.raw)}</div></div>`:''}
   <div class="acts"><button class="btn danger" id="xe-del">削除</button><div style="display:flex;gap:8px"><button class="btn" id="xe-close">閉じる</button><button class="btn primary" id="xe-save">保存</button></div></div>`);
@@ -2373,7 +2378,7 @@ function openExpMonth(id,bm){ const x=(S.expenses||[]).find(e=>e.id===id); if(!x
 function openTaskToExp(id){ const k=T(id); if(!k) return; const src=(k.raw&&k.raw!==k.title?k.raw:k.title); const a=expAmount(src); const rec=/毎月|月額|固定費|返済|ローン/.test(src);
   openSheet(`<h3>経費・支払いとして記録</h3><p class="hint" style="margin-top:0">「${esc(k.title)}」をタスクから外して、お金の記録に移します。</p>
   <div class="row2"><div class="fld" style="flex:2"><label>内容</label><input id="te-l" value="${esc(src.normalize('NFKC').replace(AMT_RE,'').replace(/毎月|月額|固定費/g,'').trim()||k.title)}"></div><div class="fld"><label>金額（税込・支払った額）</label><input id="te-a" type="number" inputmode="numeric" value="${a||''}" placeholder="金額"></div></div>
-  <div class="row2"><div class="fld"><label>日付</label><input id="te-d" type="date" value="${esc(k.due&&k.due<=iso(today())?k.due:iso(today()))}"></div><div class="fld"><label>案件</label><select id="te-p"><option value="">案件なし（会社の経費）</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===k.projectId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div>
+  <div class="row2"><div class="fld"><label>日付</label><input id="te-d" type="date" value="${esc(k.due&&k.due<=iso(today())?k.due:iso(today()))}"></div><div class="fld"><label>案件</label><select id="te-p">${projOptions(k.projectId,'案件なし（会社の経費）')}</select></div></div>
   <div class="fld"><span class="lb">くり返し</span><div class="seg" id="te-r"><button type="button" data-v="0" aria-pressed="${!rec}">この1回だけ</button><button type="button" data-v="1" aria-pressed="${rec}">毎月</button></div></div>
   <div class="fld"><span class="lb">勘定科目</span><div class="seg" id="te-c">${ACCTS.map(c=>`<button type="button" data-v="${c}" aria-pressed="${guessAcct(src)===c}">${c}</button>`).join('')}</div>
     <p class="hint">借入金の返済は、会計上は経費ではないため、利益の計算には入れず「お金の出入り」として記録します（利息の部分は「支払利息」で経費になります）。</p></div>
@@ -2445,6 +2450,7 @@ function openBill(key){ const b=billsAll().find(x=>x.key===key); if(!b) return; 
   <div class="msum sm"><div><span>小計</span><b>${yen(b.rsale)}</b></div><div><span>消費税10%</span><b>${yen(t)}</b></div><div class="g"><span>合計</span><b>${yen(b.rsale+t)}</b></div></div>
   ${b.changed?`<p class="hint" style="color:var(--purple);font-weight:700">請求書を送ったあとに案件の金額が変わっています（請求時 ${yen(b.rsale)} → 今の計算 ${yen(b.sale)}）。記録は請求時の金額のままです。追加請求や訂正が必要か確認してください。<button class="minibtn" id="b-resnap">今の計算で記録し直す</button></p>`:''}
   <p class="hint">入金予定 ${md(fromIso(b.due))}（${b.client?`${+b.client.closeDay>=28?'月末':b.client.closeDay+'日'}締め・${b.client.payMonths==1?'翌月':b.client.payMonths==2?'翌々月':b.client.payMonths+'か月後'}${+b.client.payDay>=28?'末':b.client.payDay+'日'}`:'元請けが未設定のため翌月末で仮計算'}）</p>
+  ${dueOverrideUI('b-due',((S.bills||{})[key]||{}).dates&&S.bills[key].dates.due,b.autoDue||b.due)}
   <div class="fld"><span class="lb">状況</span><div class="seg" id="bs">${['未請求','請求済','入金済'].map(x=>`<button type="button" data-v="${x}" aria-pressed="${b.status===x}">${x==='請求済'?'請求書を送った':x==='入金済'?'入金を確認した':'まだ請求していない'}</button>`).join('')}</div></div>
   <div class="fld"><span class="lb">発行した請求書</span>${filesHtml((S.bills[key]||{}).files,'発行')}${attachUI('b-file')}</div>
   <div class="fld"><span class="lb">明細</span><div class="pvlist">${b.projects.map(({p,m})=>`<div><b>${esc(short(p))}</b><span>${m.lines.filter(l=>l.kind==='sale').map(l=>`${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}`).join('\n')}</span></div>`).join('')}</div></div>
@@ -2452,6 +2458,7 @@ function openBill(key){ const b=billsAll().find(x=>x.key===key); if(!b) return; 
   <p class="hint">マネーフォワードで請求書を作るときに、明細を貼り付けて使えます。「表でコピー」は品目・単価・数量・金額の列になっています。</p>`);
   $('bs').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; snap(); const prevSt=S.bills[key]||{}; S.bills[key]=Object.assign(prevSt, {status:x.dataset.v, at:Date.now()}); S.bills[key].dates=S.bills[key].dates||{}; if(x.dataset.v!=='未請求') S.bills[key].dates[x.dataset.v]=S.bills[key].dates[x.dataset.v]||iso(today()); else S.bills[key].dates={}; if(x.dataset.v==='未請求') delete S.bills[key].snap; else if(!prevSt.snap) S.bills[key].snap={sale:b.sale,cost:b.cost,client:cname(b.client),bm:b.bm,due:b.due}; save(); closeSheet(); render(); toast(`「${x.textContent}」にしました`,true); });
   $('b-close').onclick=closeSheet; wireBillAttach(key,b);
+  $('b-due').addEventListener('change',()=>{ snap(); S.bills=S.bills||{}; S.bills[key]=S.bills[key]||{}; S.bills[key].dates=Object.assign({},S.bills[key].dates||{}); const v=$('b-due').value; if(v) S.bills[key].dates.due=v; else delete S.bills[key].dates.due; save(); render(); openBill(key); toast(v?`入金予定を${md(fromIso(v))}にしました`:'入金予定を自動の日付に戻しました',true); });
   if($('b-resnap')) $('b-resnap').onclick=()=>{ snap(); S.bills[key].snap={sale:b.sale,cost:b.cost,client:cname(b.client),bm:b.bm,due:b.due}; save(); closeSheet(); render(); toast('今の計算で記録し直しました',true); };
   const txt=()=>{ let s=`${cname(b.client)} 御中　${m}月分ご請求明細\n`; b.projects.forEach(({p,m:mm})=>{ s+=`\n■${p.name}（${md(fromIso(p.showDate))}）\n`; mm.lines.filter(l=>l.kind==='sale').forEach(l=>{ s+=`・${l.label}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}\n`; }); });
     return s+`\n小計 ${yen(b.sale)}／消費税(10%) ${yen(t)}／合計 ${yen(b.sale+t)}`; };
@@ -2463,13 +2470,15 @@ function openPay(key){ const v=paysAll().find(x=>x.key===key); if(!v) return; S.
   <div class="msum sm"><div><span>小計</span><b>${yen(v.amt)}</b></div><div><span>消費税10%</span><b>${yen(t)}</b></div><div class="g"><span>合計</span><b>${yen(v.amt+t)}</b></div></div>
   <div class="fld"><span class="lb">支払日の決め方（この手配先で覚えます）</span><div class="seg" id="pr"><button type="button" data-v="match" aria-pressed="${v.rule!=='60'}">入金に合わせる</button><button type="button" data-v="60" aria-pressed="${v.rule==='60'}">60日払い</button></div>
     <p class="hint">支払日 ${md(fromIso(v.due))}。${v.rule==='60'?'月末締めから60日後で計算しています。':'この月に関係する元請けの入金日のうち、一番遅い日に合わせています。'}</p></div>
+  ${dueOverrideUI('p-due',((S.pays||{})[key]||{}).dates&&S.pays[key].dates.due,v.autoDue||v.due)}
   <div class="fld"><span class="lb">状況</span><div class="seg" id="ps">${['請求書待ち','受領','支払済'].map(x=>`<button type="button" data-v="${x}" aria-pressed="${v.status===x}">${x==='受領'?'請求書を受け取った':x==='支払済'?'支払った':'請求書待ち'}</button>`).join('')}</div></div>
   <div class="fld"><span class="lb">受け取った請求書</span>${filesHtml((S.pays[key]||{}).files,'受領')}${attachUI('p-file')}</div>
   <div class="fld"><span class="lb">明細（受け取った請求書と照らし合わせる用）</span><div class="pvlist">${v.items.map(({p,l})=>`<div><b>${esc(short(p))}</b><span>${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}</span></div>`).join('')}</div></div>
   <div class="acts"><span></span><button class="btn" id="p-close">閉じる</button></div>`);
   $('pr').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; S.vendors=S.vendors||[]; let vm=S.vendors.find(z=>z.name===v.vendor); if(!vm){ vm={name:v.vendor}; S.vendors.push(vm); } vm.rule=x.dataset.v; save(); render(); openPay(key); });
   $('ps').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; snap(); const prevP=S.pays[key]||{}; S.pays[key]=Object.assign(prevP, {status:x.dataset.v, at:Date.now()}); S.pays[key].dates=S.pays[key].dates||{}; if(x.dataset.v!=='請求書待ち') S.pays[key].dates[x.dataset.v]=S.pays[key].dates[x.dataset.v]||iso(today()); else S.pays[key].dates={}; if(x.dataset.v==='請求書待ち') delete S.pays[key].snap; else if(!prevP.snap) S.pays[key].snap={amt:v.amt}; save(); closeSheet(); render(); toast(`「${x.textContent}」にしました`,true); });
-  $('p-close').onclick=closeSheet; wirePayAttach(key,v); }
+  $('p-close').onclick=closeSheet; wirePayAttach(key,v);
+  $('p-due').addEventListener('change',()=>{ snap(); S.pays=S.pays||{}; S.pays[key]=S.pays[key]||{}; S.pays[key].dates=Object.assign({},S.pays[key].dates||{}); const x=$('p-due').value; if(x) S.pays[key].dates.due=x; else delete S.pays[key].dates.due; save(); render(); openPay(key); toast(x?`支払日を${md(fromIso(x))}にしました`:'支払日を自動の日付に戻しました',true); }); }
 function openClients(){ S.clients=S.clients||[];
   const row=c=>`<div class="payrow" data-cid="${c.id}"><div class="row2"><div class="fld" style="flex:2"><label>元請け名</label><input data-k="name" value="${esc(c.name)}"></div>
     <div class="fld"><label>締め日</label><select data-k="closeDay">${[[31,'月末'],[15,'15日'],[20,'20日'],[25,'25日']].map(([v,l])=>`<option value="${v}" ${+c.closeDay===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
@@ -2507,6 +2516,7 @@ function openProjMoney(pid){ const p=P(pid); if(!p) return; p.extras=p.extras||[
   ${pe.length?`<div class="fld"><span class="lb">この案件でかかった経費（${yen(peSum)}）　経費を引いた粗利 ${yen(m.gross-peSum)}</span><div class="pvlist">${pe.map(x=>`<div><b>${esc(x.date?md(fromIso(x.date)):'')}</b><span>${esc(x.label)}　${yen(+x.amount)}　${esc(x.acct||'')}</span></div>`).join('')}</div></div>`:''}
   <div class="fld"><span class="lb">追加（残業・増員・交通費など、当日決まったものも）</span><div id="pm-ex">${p.extras.map(ex).join('')}</div><datalist id="vl2">${[...new Set(S.projects.flatMap(q=>(q.slots||[]).map(s=>s.vendor)).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
     <button type="button" class="btn sm" id="pm-add" style="margin-top:8px">＋ 追加する</button></div>
+  ${(()=>{ const c=clientOf(p); if(!c||!m.sale) return ''; const key=c.id+'|'+billMonthOf(p,c); const b=billsAll().find(x=>x.key===key); return b?`<div class="fld"><span class="lb">入金</span><button type="button" class="btn sm" data-act="moneyOpen" data-kind="bill" data-key="${esc(key)}">${esc(cname(c))}　${mNum(b.bm)}月分の請求　入金予定 ${md(fromIso(b.due))}　›</button><p class="hint">入金予定日を変えるときは、ここから請求の画面を開いて「予定日を変える」で変えます（同じ元請けの同じ月の案件は、まとめて1つの請求です）。</p></div>`:''; })()}
   <div class="acts"><button class="btn" id="pm-close">閉じる</button><button class="btn primary" id="pm-save">保存</button></div>`);
   $('pm-add').onclick=()=>{ $('pm-ex').insertAdjacentHTML('beforeend',ex({id:uid(),label:'',vendor:'',sell:'',cost:''})); $('pm-ex').lastElementChild.querySelector('input').focus(); };
   $('pm-ex').addEventListener('click',e=>{ if(e.target.closest('[data-rm]')) e.target.closest('[data-xid]').remove(); });
@@ -2569,9 +2579,9 @@ function openQuote(pid){ const p=P(pid); if(!p) return; const q=quoteData(p); if
   const c=clientOf(p); const t=today(); const no=`Q${iso(t).replace(/-/g,'')}-${p.id.slice(-4)}`;
   docSheet('見積書（元請け向け）',st=>{ const exp=st.valid==='none'?null:add(t,st.valid==='2w'?14:30);
     const info=[['件名',p.name],['実施日',p.dateText||(p.kind==='long'?'':md(fromIso(p.showDate)))],['時間',p.workTime||''],['会場',p.venue||'']].filter(x=>x[1]);
-    return {title:'御見積書',to:`${(st.to||cname(c)).replace(/\s*御中$/,'')} 御中`,lead:'下記のとおりお見積り申し上げます。',meta:[['見積番号',no],['見積日',fmtDate(t)],...(exp?[['有効期限',fmtDate(exp)]]:[])],
+    return {title:'御見積書',to:`${(st.to||(c&&c.fullName)||cname(c)).replace(/\s*御中$/,'')} 御中`,lead:'下記のとおりお見積り申し上げます。',meta:[['見積番号',no],['見積日',fmtDate(t)],...(exp?[['有効期限',fmtDate(exp)]]:[])],
       totalLabel:'お見積金額',total:q.total,sub:q.sub,tx:q.tx,lines:q.lines,info,notes:st.notes||''}; },
-    {init:{valid:'1m',to:'',notes:''},controls:`<div class="row2"><div class="fld"><label>宛先</label><input data-k="to" placeholder="${esc(cname(c))}"></div><div class="fld"><span class="lb">有効期限</span><div class="seg" data-k="valid"><button type="button" data-v="2w" aria-pressed="false">2週間</button><button type="button" data-v="1m" aria-pressed="true">1か月</button><button type="button" data-v="none" aria-pressed="false">なし</button></div></div></div>
+    {init:{valid:'1m',to:'',notes:''},controls:`<div class="row2"><div class="fld"><label>宛先</label><input data-k="to" placeholder="${esc((c&&c.fullName)||cname(c))}"></div><div class="fld"><span class="lb">有効期限</span><div class="seg" data-k="valid"><button type="button" data-v="2w" aria-pressed="false">2週間</button><button type="button" data-v="1m" aria-pressed="true">1か月</button><button type="button" data-v="none" aria-pressed="false">なし</button></div></div></div>
       <div class="fld"><label>備考（空欄なら出しません）</label><input data-k="notes" placeholder="例：交通費実費精算、残業は別途"></div>`,
      hint:'金額は手配枠の「請け値」から出しています。手配先への支払単価は載りません。'}); }
 function openOrder(pid){ const p=P(pid); if(!p) return; const vs=[...new Set((p.slots||[]).filter(s=>+s.price&&!isSelf(s.vendor)).map(s=>s.vendor||'手配先未定').concat((p.extras||[]).filter(x=>+x.cost&&!isSelf(x.vendor)).map(x=>x.vendor||'手配先未定')))];
@@ -2581,7 +2591,8 @@ function openOrder(pid){ const p=P(pid); if(!p) return; const vs=[...new Set((p.
   docSheet('手配依頼書（手配先向け）',st=>{ const v=st.v||vs[0]; const od=orderData(p,v); const ans=st.ans==='none'?'':st.ans==='today'?md(t)+'中':st.ans==='tmr'?md(add(t,1))+'中':md(add(t,2))+'中';
     const info=[['案件',p.name],['実施日',p.dateText||(p.kind==='long'?'':md(fromIso(p.showDate)))],['稼働時間',[p.workTime,p.timeNote].filter(Boolean).join('\n')],['集合',p.callTime||''],['会場',[p.venue,p.venueNote].filter(Boolean).join('\n')],['アクセス',p.access||''],['服装',p.bring||''],['身だしなみ・注意',p.notes||''],
       ['ネーム提出',(p.slots||[]).some(s=>s.type==='枠受け')&&p.kind!=='long'?`${md(add(fromIso(p.showDate),-4))}までに（${(p.nameFields||['名前','ふりがな']).join('・')}）`:''],['お支払い',payInfo(v)],['ご回答期限',ans]].filter(x=>x[1]);
-    return {title:'手配依頼書',to:`${v} 御中`,lead:'下記のとおり手配をお願い申し上げます。',meta:[['依頼日',fmtDate(t)]],totalLabel:'ご依頼金額',total:od.total,sub:od.sub,tx:od.tx,lines:od.lines,info,notes:st.notes||''}; },
+    const vm=(S.vendors||[]).find(x=>x.name===v)||{};
+    return {title:'手配依頼書',to:`${vm.fullName||v} ${vm.kind==='個人'?'様':'御中'}`,lead:'下記のとおり手配をお願い申し上げます。',meta:[['依頼日',fmtDate(t)]],totalLabel:'ご依頼金額',total:od.total,sub:od.sub,tx:od.tx,lines:od.lines,info,notes:st.notes||''}; },
     {init:{v:vs[0],ans:'tmr',notes:''},controls:`<div class="fld"><span class="lb">依頼先</span><div class="seg" data-k="v">${vs.map((v,i)=>`<button type="button" data-v="${esc(v)}" aria-pressed="${i===0}">${esc(v)}</button>`).join('')}</div></div>
       <div class="row2"><div class="fld"><span class="lb">ご回答期限</span><div class="seg" data-k="ans"><button type="button" data-v="today" aria-pressed="false">今日中</button><button type="button" data-v="tmr" aria-pressed="true">明日</button><button type="button" data-v="d2" aria-pressed="false">明後日</button><button type="button" data-v="none" aria-pressed="false">なし</button></div></div></div>
       <div class="fld"><label>備考（空欄なら出しません）</label><input data-k="notes" placeholder="例：前日18時までに最終確定のご連絡をお願いします"></div>`,
@@ -2889,7 +2900,7 @@ function openDocEdit(id,back){ const d=(S.docs||[]).find(x=>x.id===id); if(!d) r
   <div class="fld"><span class="lb">参考にしたい点</span><div class="seg" id="de-pt">${DOC_POINTS.map(k=>`<button type="button" data-v="${k}" aria-pressed="${nd.points.includes(k)}">${k}</button>`).join('')}</div></div>
   <div class="fld"><span class="lb">また使いたい度</span><div class="seg" id="de-rt">${[1,2,3].map(n=>`<button type="button" data-v="${n}" aria-pressed="${nd.rating===n}">${'★'.repeat(n)}</button>`).join('')}<button type="button" data-v="0" aria-pressed="${!nd.rating}">なし</button></div></div>
   <div class="fld"><label>どこが良いか（ひとこと）</label><textarea id="de-good" style="min-height:60px">${esc(d.good||'')}</textarea></div>
-  <div class="fld"><label>案件</label><select id="de-p"><option value="">案件なし（ひな形・社内マニュアル）</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===d.projectId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+  <div class="fld"><label>案件</label><select id="de-p">${projOptions(d.projectId,'案件なし（ひな形・社内マニュアル）')}</select></div>
   <div class="acts"><button class="btn danger" id="de-del">一覧から外す</button><div style="display:flex;gap:8px"><button class="btn" id="de-close">戻る</button><button class="btn primary" id="de-save">保存</button></div></div>
   <p class="hint">「一覧から外す」は、Lv.OPSの資料庫から外すだけです。ドライブのファイルは消えません。</p>`);
   const one=(id2,k)=>$(id2).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; nd[k]=k==='rating'?+b.dataset.v:b.dataset.v; [...$(id2).children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); });
@@ -2937,7 +2948,7 @@ function suggestProjects(text,limit){ const t=nz(text); const lim=iso(add(today(
 function openSort(){ const box=S.tasks.filter(k=>k.status==='inbox'); if(!box.length){ toast('受信箱は空です'); return; }
   const t=today(), fri=add(t,((5-t.getDay()+7)%7)||7), mon=add(t,((1-t.getDay()+7)%7)||7);
   const pick={}; box.forEach(k=>{ const r=parse(k.raw||k.title,{}); const sg=suggestProjects(k.raw||k.title); pick[k.id]={pid:(r.proj&&r.proj.id)||(sg[0]&&sg[0].p.id)||'',due:r.due||k.due||'',sg}; });
-  const actives=S.projects.filter(p=>p.kind==='long'||isActive(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate));
+  const nn=iso(today()); const actives=[...S.projects.filter(p=>p.kind==='long'||projEnd(p)>=nn).sort((a,b)=>a.showDate.localeCompare(b.showDate)),...S.projects.filter(p=>!(p.kind==='long'||projEnd(p)>=nn)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)))];
   const row=k=>{ const s=pick[k.id]; const chips=[...s.sg.map(x=>x.p)]; if(s.pid&&!chips.some(p=>p.id===s.pid)&&P(s.pid)) chips.unshift(P(s.pid));
     return `<div class="sortrow" data-id="${k.id}"><div class="st">${esc(k.title)}</div>
       <div class="seg sm" data-k="pid">${chips.map(p=>`<button type="button" data-v="${p.id}" aria-pressed="${s.pid===p.id}">${esc(short(p))}</button>`).join('')}<button type="button" data-v="" aria-pressed="${!s.pid}">案件なし</button>
@@ -2994,6 +3005,77 @@ document.addEventListener('click',e=>{ const inp=e.target.closest&&e.target.clos
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&calEl){ e.stopPropagation(); calClose(); } },true);
 new MutationObserver(ms=>{ ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1&&n.querySelector) calUpgrade(n); })); }).observe(document.body,{childList:true,subtree:true});
 
+/* =========================================================
+   取引先（元請け・手配先）の一覧と編集
+   ・元請け：表示名、正式名称（見積書の宛先）、担当者、連絡先、締め・入金日、登録番号、メモ
+   ・手配先：表示名、正式名称、区分、登録番号、支払ルール、担当者、連絡先、メモ
+   ・手配先の名前を変えたら、手配枠・追加・支払の記録の名前もまとめて付け替える
+   ========================================================= */
+function projOptions(sel,emptyLabel){ // 案件の選択肢：これからの案件（近い順）→ 終わった案件（近い順）
+  const n=iso(today()); const up=S.projects.filter(p=>p.kind==='long'||projEnd(p)>=n).sort((a,b)=>a.showDate.localeCompare(b.showDate));
+  const past=S.projects.filter(p=>!(p.kind==='long'||projEnd(p)>=n)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
+  const opt=p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}${p.kind==='long'?'':'（'+md(fromIso(p.showDate))+'）'}</option>`;
+  return `<option value="">${esc(emptyLabel||'案件なし')}</option>${up.length?`<optgroup label="これからの案件">${up.map(opt).join('')}</optgroup>`:''}${past.length?`<optgroup label="終わった案件">${past.map(opt).join('')}</optgroup>`:''}`; }
+function vendorNamesAll(){ return [...new Set([...(S.vendors||[]).map(v=>v.name),...S.projects.flatMap(p=>(p.slots||[]).map(s=>s.vendor))].filter(v=>v&&!isSelf(v)&&v!=='手配先未定'))]; }
+function openPartners(tab){ tab=tab||'c'; S.clients=S.clients||[]; S.vendors=S.vendors||[];
+  const used=cid=>S.projects.filter(p=>p.clientId===cid).length;
+  const vUsed=nm=>S.projects.filter(p=>(p.slots||[]).some(s=>s.vendor===nm)).length;
+  const cRows=S.clients.slice().sort((a,b)=>used(b.id)-used(a.id)).map(c=>`<li class="mrow" data-act="clientEdit" data-id="${c.id}"><div class="ml"><b>${esc(c.name)}</b><span>${esc([c.person,c.tel,c.tool].filter(Boolean).join('　')||'連絡先未登録')}　${+c.closeDay>=28?'月末':c.closeDay+'日'}締め・${c.payMonths==2?'翌々月':c.payMonths==3?'3か月後':'翌月'}${+c.payDay>=28?'末':c.payDay+'日'}入金</span></div><div class="mr"><i class="chip">${used(c.id)}案件</i></div></li>`).join('');
+  const names=vendorNamesAll().sort((a,b)=>vUsed(b)-vUsed(a));
+  const vRows=names.map(nm=>{ const v=S.vendors.find(x=>x.name===nm)||{}; return `<li class="mrow" data-act="vendorEdit" data-name="${esc(nm)}"><div class="ml"><b>${esc(nm)}</b><span>${esc([v.person,v.tel,v.tool].filter(Boolean).join('　')||'連絡先未登録')}　${v.kind||'法人'}　${v.rule==='60'?'60日払い':'入金に合わせる'}${v.regNo?'':'　登録番号なし'}</span></div><div class="mr"><i class="chip">${vUsed(nm)}案件</i>${S.vendors.some(x=>x.name===nm)?'':'<i class="chip late">未登録</i>'}</div></li>`; }).join('');
+  openSheet(`<h3>取引先</h3>
+  <div class="seg" id="pt-tab"><button type="button" data-v="c" aria-pressed="${tab==='c'}">元請け（${S.clients.length}）</button><button type="button" data-v="v" aria-pressed="${tab==='v'}">手配先（${names.length}）</button></div>
+  <div style="margin:12px 0"><button class="btn sm primary" data-act="${tab==='c'?'clientEdit':'vendorEdit'}" data-id="" data-name="">＋ ${tab==='c'?'元請け':'手配先'}を追加</button></div>
+  ${tab==='c'?(cRows?`<ul class="mlist">${cRows}</ul>`:'<div class="empty">まだ元請けがありません。</div>'):(vRows?`<ul class="mlist">${vRows}</ul>`:'<div class="empty">まだ手配先がありません。</div>')}
+  <div class="acts"><span></span><button class="btn" id="pt-close">閉じる</button></div>`);
+  $('pt-tab').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) openPartners(b.dataset.v); });
+  $('pt-close').onclick=closeSheet; }
+function pf(id,label,val,ph,type){ return `<div class="fld"><label for="${id}">${label}</label><input id="${id}" ${type?`type="${type}"`:''} value="${esc(val||'')}" placeholder="${esc(ph||'')}"></div>`; }
+function openClientEdit(id){ S.clients=S.clients||[]; const c=id?S.clients.find(x=>x.id===id):null; const d=c||{closeDay:31,payMonths:1,payDay:31};
+  const sel=(k,opts)=>`<select id="ce-${k}">${opts.map(([v,l])=>`<option value="${v}" ${+d[k]===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  openSheet(`<h3>${c?'元請けを編集':'元請けを追加'}</h3>
+  <div class="row2">${pf('ce-name','表示名（アプリの中で使う名前）',d.name,'例：ランドマークス')}${pf('ce-full','正式名称（見積書の宛先）',d.fullName,'例：株式会社ランドマークス')}</div>
+  <div class="row2">${pf('ce-person','担当者（何人でも「、」で区切る）',d.person,'例：桑波田、脇坂')}${pf('ce-tool','連絡手段',d.tool,'例：LINE、ChatWork、メール')}</div>
+  <div class="row2">${pf('ce-tel','電話',d.tel,'','tel')}${pf('ce-mail','メール',d.mail,'','email')}</div>
+  ${pf('ce-addr','住所（請求書の送り先など）',d.addr,'')}
+  <div class="row2"><div class="fld"><label>締め日</label>${sel('closeDay',[[31,'月末'],[15,'15日'],[20,'20日'],[25,'25日']])}</div><div class="fld"><label>入金</label>${sel('payMonths',[[1,'翌月'],[2,'翌々月'],[3,'3か月後']])}</div><div class="fld"><label>入金日</label>${sel('payDay',[[31,'末日'],[10,'10日'],[15,'15日'],[20,'20日'],[25,'25日']])}</div></div>
+  ${pf('ce-reg','インボイス登録番号',d.regNo,'T+13桁')}
+  <div class="fld"><label for="ce-note">メモ（請求のクセ、注意点など）</label><textarea id="ce-note" style="min-height:60px">${esc(d.note||'')}</textarea></div>
+  <div class="acts">${c?'<button class="btn danger" id="ce-del">削除</button>':'<span></span>'}<div style="display:flex;gap:8px"><button class="btn" id="ce-back">戻る</button><button class="btn primary" id="ce-save">保存</button></div></div>`);
+  $('ce-back').onclick=()=>openPartners('c');
+  $('ce-save').onclick=()=>{ const name=$('ce-name').value.trim(); if(!name){ toast('表示名を入れてください'); return; } snap();
+    const o=c||{id:uid()}; Object.assign(o,{name,fullName:$('ce-full').value.trim(),person:$('ce-person').value.trim(),tool:$('ce-tool').value.trim(),tel:$('ce-tel').value.trim(),mail:$('ce-mail').value.trim(),addr:$('ce-addr').value.trim(),regNo:$('ce-reg').value.trim(),note:$('ce-note').value.trim(),closeDay:+$('ce-closeDay').value,payMonths:+$('ce-payMonths').value,payDay:+$('ce-payDay').value});
+    if(!c) S.clients.push(o); save(); render(); toast('保存しました',true); openPartners('c'); };
+  if($('ce-del')) $('ce-del').onclick=()=>{ const n=S.projects.filter(p=>p.clientId===c.id).length; if(!confirm(n?`この元請けは${n}件の案件で使われています。削除すると、その案件は「元請け未設定」になります。削除しますか？`:'この元請けを削除しますか？')) return; snap();
+    S.clients=S.clients.filter(x=>x!==c); S.projects.forEach(p=>{ if(p.clientId===c.id) p.clientId=''; }); save(); render(); toast('削除しました',true); openPartners('c'); }; }
+function openVendorEdit(name){ S.vendors=S.vendors||[]; let v=name?S.vendors.find(x=>x.name===name):null; const d=v||{name:name||'',kind:'法人',rule:'match'};
+  openSheet(`<h3>${name?'手配先を編集':'手配先を追加'}</h3>
+  <div class="row2">${pf('ve-name','表示名（手配枠で使う名前）',d.name,'例：Workyou')}${pf('ve-full','正式名称（依頼書の宛先）',d.fullName,'例：株式会社Workyou')}</div>
+  <div class="row2"><div class="fld"><span class="lb">区分</span><div class="seg" id="ve-kind"><button type="button" data-v="法人" aria-pressed="${d.kind!=='個人'}">法人</button><button type="button" data-v="個人" aria-pressed="${d.kind==='個人'}">個人</button></div></div>
+    <div class="fld"><span class="lb">支払日</span><div class="seg" id="ve-rule"><button type="button" data-v="match" aria-pressed="${d.rule!=='60'}">入金に合わせる</button><button type="button" data-v="60" aria-pressed="${d.rule==='60'}">60日払い</button></div></div></div>
+  ${pf('ve-reg','インボイス登録番号',d.regNo,'T+13桁（なければ空欄）')}
+  <div class="row2">${pf('ve-person','担当者（「、」で区切る）',d.person,'例：栢森')}${pf('ve-tool','連絡手段',d.tool,'例：LINE')}</div>
+  <div class="row2">${pf('ve-tel','電話',d.tel,'','tel')}${pf('ve-mail','メール',d.mail,'','email')}</div>
+  ${pf('ve-addr','住所',d.addr,'')}
+  <div class="fld"><label for="ve-note">メモ（得意な職種、単価の目安、注意点など）</label><textarea id="ve-note" style="min-height:60px">${esc(d.note||'')}</textarea></div>
+  <div class="acts">${v?'<button class="btn danger" id="ve-del">一覧から外す</button>':'<span></span>'}<div style="display:flex;gap:8px"><button class="btn" id="ve-back">戻る</button><button class="btn primary" id="ve-save">保存</button></div></div>`);
+  let kind=d.kind||'法人', rule=d.rule||'match';
+  const one=(id,cb)=>$(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; cb(b.dataset.v); [...$(id).children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); });
+  one('ve-kind',x=>kind=x); one('ve-rule',x=>rule=x);
+  $('ve-back').onclick=()=>openPartners('v');
+  $('ve-save').onclick=()=>{ const nn=$('ve-name').value.trim(); if(!nn){ toast('表示名を入れてください'); return; }
+    if(nn!==name&&S.vendors.some(x=>x.name===nn)){ toast('同じ表示名の手配先がすでにあります'); return; } snap();
+    if(!v){ v={name:nn}; S.vendors.push(v); }
+    if(name&&nn!==name){ // 名前を変えたら、使われている所もまとめて付け替える
+      S.projects.forEach(p=>{ (p.slots||[]).forEach(s=>{ if(s.vendor===name) s.vendor=nn; }); (p.extras||[]).forEach(x=>{ if(x.vendor===name) x.vendor=nn; }); });
+      Object.keys(S.pays||{}).forEach(k=>{ if(k.split('|')[0]===name){ const nk=nn+'|'+k.split('|')[1]; S.pays[nk]=S.pays[k]; delete S.pays[k]; } });
+      (S.expenses||[]).forEach(x=>{ if(x.vendor===name) x.vendor=nn; }); }
+    Object.assign(v,{name:nn,fullName:$('ve-full').value.trim(),kind,rule,regNo:$('ve-reg').value.trim(),person:$('ve-person').value.trim(),tool:$('ve-tool').value.trim(),tel:$('ve-tel').value.trim(),mail:$('ve-mail').value.trim(),addr:$('ve-addr').value.trim(),note:$('ve-note').value.trim()});
+    save(); render(); toast('保存しました',true); openPartners('v'); };
+  if($('ve-del')) $('ve-del').onclick=()=>{ if(!confirm('この手配先を一覧から外しますか？（手配枠に入っている名前はそのまま残ります）')) return; snap(); S.vendors=S.vendors.filter(x=>x!==v); save(); render(); toast('外しました',true); openPartners('v'); }; }
+/* 入金日・支払日を、その月だけ手で変える */
+function dueOverrideUI(id,val,auto){ return `<div class="fld"><label for="${id}">予定日を変える（空欄にすると自動の${md(fromIso(auto))}に戻ります）</label><input id="${id}" type="date" value="${esc(val||'')}"></div>`; }
+
 function openSearch(){
   openSheet(`<h3>さがす</h3><div class="search"><input id="q" type="search" placeholder="タスク名、案件名、メモ、経費で検索" aria-label="検索"></div><div id="qres" style="margin-top:12px"></div>`);
   const q=$('q'); setTimeout(()=>q.focus(),250);
@@ -3015,7 +3097,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29d';
+const APP_VER='2026.09.29e';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
