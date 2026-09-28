@@ -2801,13 +2801,18 @@ const DOC_KINDS=['運営マニュアル','スタッフマニュアル','進行�
 const DOC_POINTS=['デザイン','配置・レイアウト','中身の濃さ','運営方法','言い回し'];
 function addBizDays(d,n){ let x=d, c=0; while(c<n){ x=add(x,1); if(isBizDay(x)) c++; } return x; }
 function reviewOn(){ return (S.settings||{}).review!==false; }
-function ensureReviewTasks(){ let ch=false; const lim=iso(add(today(),-10));
+function ensureReviewTasks(){ let ch=false; const lim=iso(add(today(),-10)), n=iso(today());
   if(!reviewOn()){ const before=S.tasks.length; S.tasks=S.tasks.filter(t=>!(t.tag==='振り返り'&&t.status!=='done'&&t.source==='自動')); if(S.tasks.length!==before) save(); return; }
-  S.projects.forEach(p=>{ if(p.kind==='long'||!p.showDate) return; const end=projEnd(p); if(end<lim) return;
-    if(S.tasks.some(t=>t.projectId===p.id&&t.tag==='振り返り')||(p.review&&p.review.skip)) return;
-    const due=iso(addBizDays(fromIso(end),2)); if(due<iso(today())) return; // すでに期限を過ぎた過去の案件には置かない（ためこまない）
-    S.tasks.push(mkTask({title:'振り返りを書く（うまくいったこと・困ったこと・申し送り・会場メモ）',raw:'自動：振り返り',source:'自動',projectId:p.id,due,status:'todo',createdAt:Date.now(),tag:'振り返り'})); ch=true; });
+  S.projects.forEach(p=>{ if(p.kind==='long'||!p.showDate) return; const end=projEnd(p);
+    const k=S.tasks.find(t=>t.projectId===p.id&&t.tag==='振り返り');
+    // 本番の最終日より前は出さない（前に作られていたものは一度下げる）。最終日になったら、最終日〜2営業日後で置く
+    if(n<end){ if(k&&k.status!=='done'&&k.source==='自動'){ S.tasks=S.tasks.filter(t=>t!==k); ch=true; } return; }
+    if(k){ if(k.status!=='done'&&k.source==='自動'&&k.start!==end){ k.start=end; k.due=iso(addBizDays(fromIso(end),2)); ch=true; } return; }
+    if(end<lim||(p.review&&p.review.skip)) return;
+    const due=iso(addBizDays(fromIso(end),2)); if(due<n) return; // すでに期限を過ぎた過去の案件には置かない（ためこまない）
+    S.tasks.push(mkTask({title:'振り返りを書く（うまくいったこと・困ったこと・申し送り・会場メモ）',raw:'自動：振り返り',source:'自動',projectId:p.id,start:end,due,status:'todo',createdAt:Date.now(),tag:'振り返り'})); ch=true; });
   if(ch) save(); }
+
 function recordText(p){ const m=projMoney(p), c=clientOf(p), r=p.review||{}; const docs=(S.docs||[]).filter(d=>d.projectId===p.id);
   const L=[`# ${p.name}`,'',`- 日程：${p.dateText||md(fromIso(p.showDate))}`,`- 元請け：${cname(c)}${p.client?'（'+p.client+'）':''}`,p.venue?`- 会場：${p.venue}`:'',p.venueNote?`- 会場の補足：${p.venueNote}`:'',p.callTime?`- 集合：${p.callTime}`:'',p.workTime?`- 稼働時間：${p.workTime}`:'',p.bring?`- 服装・持ち物：${p.bring}`:'',p.notes?`- 身だしなみ・注意：${p.notes}`:'',''];
   if((p.slots||[]).length){ L.push('## 手配'); (p.slots||[]).forEach(s=>L.push(`- ${s.role}：${s.need}名×${s.days||1}日　手配先 ${s.vendor||'未定'}（${s.type||''}）${(s.people||[]).length?'　実績 '+s.people.length+'名':''}`)); L.push(''); }
@@ -2987,7 +2992,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29a';
+const APP_VER='2026.09.29b';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
