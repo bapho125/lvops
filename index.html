@@ -1056,6 +1056,37 @@ body{line-break:strict}
 .pcard.flash{box-shadow:0 0 0 3px var(--blue);transition:box-shadow .3s}
 .pcard{scroll-margin-top:16px}
 .nx[data-pid]{cursor:pointer}
+
+/* ガント */
+.tl .dh{min-height:74px}
+.tl .dh .cnts{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:2px;min-height:26px}
+.tl .dh .cnts i{font-style:normal;font-size:9.5px;font-weight:700;line-height:1.2;padding:0 3px;border-radius:3px}
+.tl .dh .cd{color:#fff;background:var(--teal-lo,#2e8c8c)}.tl .dh .cr{color:var(--blue);border:1px solid color-mix(in oklab,var(--blue) 60%,transparent)}
+.tl .corner{flex-direction:column;justify-content:flex-end;gap:6px;padding:6px 6px 8px}
+.tlmode{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.tlmode button{flex:1;height:26px;border:0;background:transparent;color:var(--sub);font-size:12px;font-weight:700;padding:0 8px;cursor:pointer;white-space:nowrap}
+.tlmode button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.tl .cell{position:relative;min-height:44px}
+.gbar{position:absolute;top:calc(50% - 11px);left:3px;height:22px;margin-top:0;border-radius:6px;z-index:1;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;cursor:pointer;box-sizing:border-box}
+.gbar span{overflow:hidden;text-overflow:ellipsis}
+.gbar.g-prep{background:color-mix(in oklab,var(--teal) 22%,transparent);border:1px dashed color-mix(in oklab,var(--teal) 70%,transparent);color:var(--ink)}
+.gbar.g-show{background:var(--grad);color:var(--on-accent,#fff)}
+.gbar.g-bill{background:color-mix(in oklab,var(--purple) 22%,transparent);border:1px solid var(--purple);color:var(--purple)}
+.gbar.g-bill.g-done{background:color-mix(in oklab,var(--faint) 25%,transparent);border-color:var(--faint);color:var(--sub)}
+.gbar.g-tk{background:color-mix(in oklab,var(--teal) 28%,transparent);border:1px solid var(--teal);color:var(--ink)}
+.gbar.g-tk.g-doing{background:var(--grad);color:var(--on-accent,#fff);border-color:transparent}
+.gbar.g-tk.g-wait{background:color-mix(in oklab,var(--blue) 25%,transparent);border-color:var(--blue)}
+.gbar.g-tk.g-late{background:color-mix(in oklab,var(--purple) 25%,transparent);border-color:var(--purple);color:var(--purple)}
+.gbar.g-tk.g-fatal{background:var(--grad-fatal);border-color:transparent;color:var(--on-fatal)}
+.gbar.g-tk.g-nodue{background-image:linear-gradient(90deg,transparent,transparent 70%,var(--card));border-style:dashed}
+.tl .lab .labbtn{all:unset;cursor:pointer;display:block;width:100%;font-weight:700;font-size:12.5px;line-height:1.3;overflow:hidden}
+.tl .lab .labbtn small{display:block;font-weight:500;font-size:11px;color:var(--sub);white-space:nowrap}
+.legend .lg{display:inline-block;width:18px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.lg.prep{border:1px dashed var(--teal);background:color-mix(in oklab,var(--teal) 22%,transparent)}.lg.show{background:var(--grad)}.lg.bill{border:1px solid var(--purple);background:color-mix(in oklab,var(--purple) 22%,transparent)}.lg.billd{background:color-mix(in oklab,var(--faint) 30%,transparent)}
+.lg.tk{border:1px solid var(--teal);background:color-mix(in oklab,var(--teal) 28%,transparent)}.lg.doing{background:var(--grad)}.lg.wait{border:1px solid var(--blue);background:color-mix(in oklab,var(--blue) 25%,transparent)}.lg.late{border:1px solid var(--purple)}.lg.fatal{background:var(--grad-fatal)}
+.tlbar{margin:10px 0}
+.tlbar .tlmode{display:inline-flex;max-width:100%}
+.tlbar .tlmode button{height:34px;padding:0 16px;font-size:13px}
 </style>
 </head>
 <body>
@@ -1073,9 +1104,10 @@ body{line-break:strict}
     <div id="todayBody"></div>
   </section>
   <section class="view" id="v-time">
+    <div class="tlbar" id="tlBar"></div>
     <div class="tl-wrap"><div class="tl" id="tl"></div></div>
-    <div class="legend"><span><i style="background:var(--teal)"></i>予定</span><span><i style="background:var(--blue)"></i>返事待ち</span><span><i style="background:var(--purple)"></i>期限切れ</span><span><i style="background:var(--faint)"></i>完了</span><span><i style="background:var(--blue);border-radius:0;width:3px"></i>本番</span></div>
-    <p class="hint">点をタップするとタスクを開けます。数字は同じ日に重なっているタスクの数です。</p>
+    <div class="legend" id="tlLegend"></div>
+    <p class="hint">上のボタンで「案件のガント」と「タスクのガント」を切り替えられます。日付の下の「期」はその日が期日のタスク、「進」はその日に進行中（始める日〜期日のあいだ）のタスクの数です。棒を押すと、案件やタスクを開けます。</p>
   </section>
   <section class="view" id="v-board">
     <div class="bfilter"><select id="boardProj" aria-label="案件で絞り込み"></select></div>
@@ -1482,39 +1514,63 @@ function isActive(p){ if(p.kind==='long') return true; const t=today(), end=proj
   if(end>=monthStart(t,-1)) return hasBill(p)?billPending(p):t.getDate()<=graceDays(); // 請求があるものは「送るまで」、ないものは月初の数日だけ
   return billPending(p)&&end>=monthStart(t,-3); }
 function endedTag(p){ const t=today(), end=projEnd(p); if(end>=iso(t)) return ''; return billPending(p)?'終了・請求まだ':'終了'; }
+/* ---------- 予定：案件のガント／タスクのガント ----------
+ * 案件：準備（最初のタスク〜本番の前日）→ 本番 → 請求（本番の翌日〜請求書を送るまで）を横棒で
+ * タスク：始める日 → 期日 を横棒で（始める日が未設定なら、入れた日から）
+ * 日付の下に、その日が期日のタスクの数（期）と、その日に進行中のタスクの数（進）を出す
+ */
+let tlMode='proj';
+function taskStart(k){ return k.start||(k.createdAt?iso(new Date(k.createdAt)):iso(today())); }
 function renderTime(){
-  const t=today(); const n=iso(t), W=38;
-  const ps=[...S.projects].filter(p=>p.kind!=='long'&&isActive(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate));
-  const firstShow=ps.length?ps[0].showDate:n;
-  const start=fromIso([monthStart(t), firstShow<monthStart(t)?firstShow:monthStart(t)].sort()[0]);
-  const lastEnd=ps.reduce((m,p)=>projEnd(p)>m?projEnd(p):m,n);
-  const total=Math.min(120,Math.max(dd(t,start)+22,dd(fromIso(lastEnd),start)+4));
-  const live=ps.filter(p=>!endedTag(p)), done=ps.filter(p=>endedTag(p)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
-  const rows=live.map(p=>({p,tasks:S.tasks.filter(k=>k.projectId===p.id&&k.due)}));
-  if(done.length){ rows.push({sep:`終わった案件（${done.length}件）`}); done.forEach(p=>rows.push({p,tasks:S.tasks.filter(k=>k.projectId===p.id&&k.due)})); }
-  const none=S.tasks.filter(k=>!k.projectId&&k.due&&k.status!=='done'); if(none.length) rows.push({p:null,tasks:none});
+  const t=today(), n=iso(t), W=38;
+  const ps=[...S.projects].filter(p=>p.kind!=='long'&&isActive(p));
+  const open=S.tasks.filter(k=>k.status!=='done');
+  // 表示期間：今月の頭（終わった案件があればそこから）〜 先の予定まで
+  const firstShow=ps.reduce((m,p)=>p.showDate<m?p.showDate:m,monthStart(t));
+  const start=fromIso(firstShow<monthStart(t)?firstShow:monthStart(t));
+  let last=n; ps.forEach(p=>{ const e=projEnd(p); if(e>last) last=e; }); open.forEach(k=>{ if(k.due&&k.due>last) last=k.due; });
+  const total=Math.min(150,Math.max(dd(t,start)+24,dd(fromIso(last),start)+5));
+  const idx=d=>dd(fromIso(d),start);
+  // 日ごとの件数
+  const dueCnt={}, runCnt={};
+  open.forEach(k=>{ if(k.due){ const i=idx(k.due); if(i>=0&&i<total) dueCnt[i]=(dueCnt[i]||0)+1; }
+    const a=idx(taskStart(k)), b=k.due?idx(k.due):idx(n); for(let i=Math.max(0,a);i<=Math.min(total-1,b);i++) runCnt[i]=(runCnt[i]||0)+1; });
   let h=`<div class="tr thead"><div class="corner"><button type="button" class="tlToday" data-act="tlToday">今日へ</button></div>`;
-  for(let i=0;i<total;i++){ const d=add(start,i), we=d.getDay()===0||d.getDay()===6, td=iso(d)===n, m1=d.getDate()===1;
-    h+=`<div class="dh ${we?'we':''} ${td?'td':''} ${m1?'m1':''}">${m1||i===0?`<em>${d.getMonth()+1}月</em>`:''}<b>${d.getDate()}</b>${WD[d.getDay()]}</div>`; }
+  $('tlBar').innerHTML=`<div class="tlmode"><button type="button" data-act="tlMode" data-m="proj" aria-pressed="${tlMode==='proj'}">案件のガント</button><button type="button" data-act="tlMode" data-m="task" aria-pressed="${tlMode==='task'}">タスクのガント</button></div>`;
+  for(let i=0;i<total;i++){ const d=add(start,i), we=d.getDay()===0||d.getDay()===6||isHoliday(d), td=iso(d)===n, m1=d.getDate()===1;
+    h+=`<div class="dh ${we?'we':''} ${td?'td':''} ${m1?'m1':''}">${m1||i===0?`<em>${d.getMonth()+1}月</em>`:''}<b>${d.getDate()}</b>${WD[d.getDay()]}
+      <span class="cnts">${dueCnt[i]?`<i class="cd" title="期日のタスク">期${dueCnt[i]}</i>`:''}${runCnt[i]?`<i class="cr" title="進行中のタスク">進${runCnt[i]}</i>`:''}</span></div>`; }
   h+=`</div>`;
-  rows.forEach(r=>{
-    if(r.sep){ h+=`<div class="tr tsep"><div class="lab">${esc(r.sep)}</div><div class="sepfill" style="width:${total*W}px"></div></div>`; return; }
-    const p=r.p; const sd=p?dd(fromIso(p.showDate),t):null; const tt=p?slotTotals(p):null; const tag=p?endedTag(p):'';
-    h+=`<div class="tr"><div class="lab ${tag?'ended':''}">${p?`<div>${esc(short(p))}<small>${tag?`<span class="${/請求/.test(tag)?'bp':''}">${tag}</span>`:(sd<=0?'本番中':'本番 D-'+sd)}${tt&&tt.has?'　枠 '+tt.f+'/'+tt.n:''}</small></div>`:'<div>案件なし</div>'}</div>`;
-    const byDay={}; r.tasks.forEach(k=>{ let idx=dd(fromIso(k.due),start); if(idx<0) idx=0; if(idx>=total) return; (byDay[idx]=byDay[idx]||[]).push(k); });
-    const sIdx=p?dd(fromIso(p.showDate),start):-1, eIdx=p?dd(fromIso(projEnd(p)),start):-1;
-    const openIdx=r.tasks.filter(k=>k.status!=='done').map(k=>Math.max(0,dd(fromIso(k.due),start)));
-    const spanFrom=openIdx.length?Math.min(...openIdx):-1;
-    for(let i=0;i<total;i++){ const d=add(start,i), we=d.getDay()===0||d.getDay()===6; let c='';
-      if(p && spanFrom>=0 && i===spanFrom && sIdx>spanFrom) c+=`<div class="span" style="left:${W/2}px;width:${(sIdx-spanFrom)*W}px"></div>`;
-      if(p && i>=sIdx && i<=eIdx) c+=`<div class="per ${i===sIdx?'s':''} ${i===eIdx?'e':''} ${tag?'done':''}">${i===sIdx?'本番':''}</div>`;
-      const ks=byDay[i]; if(ks){ const k=ks.find(x=>x.status!=='done'&&issues(x).some(s=>s==='期限切れ'))||ks.find(x=>x.status!=='done')||ks[0];
-        const cls=ks.some(fatalOf)?'fatal':(k.status==='done'?'done':(issues(k).includes('期限切れ')?'late':(k.status==='wait'?'wait':'')));
-        c+=`<button class="dot ${cls}" ${ks.length>1?'data-many':''} data-act="tlOpen" data-ids="${ks.map(x=>x.id).join(',')}" aria-label="${esc(ks.map(x=>x.title).join('、'))}">${ks.length>1?ks.length:''}</button>`; }
-      h+=`<div class="cell ${we?'we':''} ${iso(d)===n?'td':''} ${d.getDate()===1?'m1':''}">${c}</div>`; }
-    h+=`</div>`;
-  });
+  const cellRow=(label,cellsFn,cls)=>{ let r=`<div class="tr ${cls||''}"><div class="lab">${label}</div>`; for(let i=0;i<total;i++){ const d=add(start,i), we=d.getDay()===0||d.getDay()===6||isHoliday(d); r+=`<div class="cell ${we?'we':''} ${iso(d)===n?'td':''} ${d.getDate()===1?'m1':''}">${cellsFn(i)}</div>`; } return r+'</div>'; };
+  const bar=(a,b,cls,text,act)=>(i)=>{ if(i!==Math.max(0,a)||a>b||b<0||a>=total) return ''; const s=Math.max(0,a), e=Math.min(total-1,b); const wpx=(e-s+1)*W-6; return `<div class="gbar ${cls}" style="width:${wpx}px" title="${esc(text||'')}" ${act||''}><span>${wpx>=64?(text||''):''}</span></div>`; };
+  const sep=txt=>`<div class="tr tsep"><div class="lab">${esc(txt)}</div><div class="sepfill" style="width:${total*W}px"></div></div>`;
+  if(tlMode==='proj'){
+    const live=ps.filter(p=>!endedTag(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate)), done=ps.filter(p=>endedTag(p)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
+    const row=p=>{ const ts=S.tasks.filter(k=>k.projectId===p.id), firstT=ts.reduce((m,k)=>{ const s0=k.due&&k.due<taskStart(k)?k.due:taskStart(k); return s0<m?s0:m; },p.showDate);
+      const prepA=idx(firstT<p.showDate?firstT:iso(add(fromIso(p.showDate),-14))), showA=idx(p.showDate), showB=idx(projEnd(p));
+      const c=clientOf(p), st=c?(((S.bills||{})[c.id+'|'+billMonthOf(p,c)]||{})):{};
+      const billed=st.status&&st.status!=='未請求', billEnd=billed?(st.dates&&st.dates['請求済']?idx(st.dates['請求済']):showB+1):Math.max(showB+1,idx(n));
+      const hasBill=projMoney(p).sale>0; const tag=endedTag(p), sd=dd(fromIso(p.showDate),t);
+      const bars=[bar(prepA,showA-1,'g-prep','準備',`data-act="gotoProj" data-pid="${p.id}"`),bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`)];
+      if(hasBill&&!(billed&&billEnd<=showB)) bars.push(bar(showB+1,billEnd,billed?'g-bill g-done':'g-bill','請求'+(billed?'済':'まだ'),`data-act="moneyFor" data-pid="${p.id}"`));
+      return cellRow(`<button type="button" class="labbtn" data-act="gotoProj" data-pid="${p.id}">${esc(short(p))}<small>${tag?`<span class="${/請求/.test(tag)?'bp':''}">${tag}</span>`:(sd<=0?'本番中':'本番 D-'+sd)}</small></button>`,i=>bars.map(f=>f(i)).join(''),tag?'ended':''); };
+    h+=live.map(row).join('');
+    if(done.length){ h+=sep(`終わった案件（${done.length}件）`)+done.map(row).join(''); }
+    if(!ps.length) h+=sep('表示する案件はありません');
+  } else {
+    const groups={}; open.forEach(k=>{ (groups[k.projectId||'']=groups[k.projectId||'']||[]).push(k); });
+    const order=Object.keys(groups).sort((a,b)=>{ const pa=P(a), pb=P(b); return (pa?pa.showDate:'9999').localeCompare(pb?pb.showDate:'9999'); });
+    order.forEach(pid=>{ const p=P(pid); h+=sep(p?short(p):'案件なし');
+      groups[pid].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).forEach(k=>{
+        const a=idx(taskStart(k)), b=k.due?idx(k.due):idx(n); const late=k.due&&k.due<n;
+        const cls=fatalOf(k)?'g-tk g-fatal':late?'g-tk g-late':k.status==='wait'?'g-tk g-wait':k.status==='doing'?'g-tk g-doing':'g-tk';
+        const f=bar(Math.min(a,b),b,cls+(k.due?'':' g-nodue'),k.due?md(fromIso(k.due)):'期日なし',`data-act="open" data-id="${k.id}"`);
+        h+=cellRow(`<button type="button" class="labbtn" data-act="open" data-id="${k.id}">${esc(k.title.slice(0,26))}<small>${esc(ST[k.status])}${k.start?'':'　開始日なし'}</small></button>`,f,''); }); });
+    if(!open.length) h+=sep('残っているタスクはありません');
+  }
   const tl=$('tl'); tl.style.gridTemplateColumns=''; tl.innerHTML=h; tl.dataset.today=String(dd(t,start));
+  $('tlLegend').innerHTML=tlMode==='proj'?'<span><i class="lg prep"></i>準備</span><span><i class="lg show"></i>本番</span><span><i class="lg bill"></i>請求まだ</span><span><i class="lg billd"></i>請求済</span>'
+    :'<span><i class="lg tk"></i>未着手</span><span><i class="lg doing"></i>進行中</span><span><i class="lg wait"></i>返事待ち</span><span><i class="lg late"></i>期限切れ</span><span><i class="lg fatal"></i>至急</span>';
   scrollTlToday();
 }
 function scrollTlToday(){ const tl=$('tl'), w=tl&&tl.parentElement; if(!w) return; const i=+(tl.dataset.today||0); requestAnimationFrame(()=>{ w.scrollLeft=Math.max(0,i*38-38*3); }); }
@@ -1603,6 +1659,8 @@ document.addEventListener('click',e=>{
   if(act==='zen') openZen(a.dataset.pid);
   if(act==='selfEdit') openSelf(a.dataset.pid,a.dataset.sid);
   if(act==='reviewSkip'){ const k=T(a.dataset.id); if(k){ snap(); const pj=P(k.projectId); if(pj){ pj.review=Object.assign({},pj.review||{},{skip:true}); } S.tasks=S.tasks.filter(x=>x.id!==k.id); save(); render(); toast('この案件の振り返りはなしにしました',true); } }
+  if(act==='tlMode'){ tlMode=a.dataset.m; renderTime(); return; }
+  if(act==='moneyFor'){ openProjMoney(a.dataset.pid); return; }
   if(act==='tlToday'){ const tl=$('tl'), w=tl.parentElement; w.scrollTo({left:Math.max(0,+(tl.dataset.today||0)*38-38*3),behavior:'smooth'}); }
   if(act==='sortInbox') openSort();
   if(act==='know') openKnow(a.dataset.pid);
@@ -1688,6 +1746,7 @@ function openTask(id){ const k=T(id); if(!k) return; closeSheet();
   openSheet(`<h3>タスクを整理</h3>
   <div class="fld"><label for="f-title">内容</label><textarea id="f-title">${esc(k.title)}</textarea></div>
   <div class="fld"><label for="f-proj">案件</label><select id="f-proj"><option value="">案件なし</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===k.projectId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="f-start">始める日（予定のタスク表示で、始める日から期日までを棒で表示します）</label><input id="f-start" type="date" value="${k.start||''}"></div>
   <div class="fld"><span class="lb">期日</span><div class="seg" id="f-q">${q.map(([l,v])=>`<button type="button" data-v="${v}" aria-pressed="${(k.due||'')===v}">${l}</button>`).join('')}</div>
     <input id="f-due" type="date" value="${k.due||''}" style="margin-top:8px" aria-label="期日を日付で選ぶ"></div>
   <div class="fld"><span class="lb">状態</span><div class="seg" id="f-st">${ORDER.map(s=>`<button type="button" data-s="${s}" aria-pressed="${s===k.status}">${ST[s]}</button>`).join('')}</div></div>
@@ -1708,7 +1767,8 @@ function openTask(id){ const k=T(id); if(!k) return; closeSheet();
   $('f-msg').onclick=()=>openMsg(id);
   $('f-fatal').onclick=()=>{ snap(); k.fatal=!k.fatal; save(); closeSheet(); render(); toast(k.fatal?'至急にしました。今日の画面の一番上に出ます':'至急を外しました',true); };
   $('f-del').onclick=()=>{ snap(); S.tasks=S.tasks.filter(x=>x.id!==id); save(); closeSheet(); render(); toast('削除しました',true); };
-  $('f-save').onclick=()=>{ snap(); k.title=$('f-title').value.trim()||k.title; k.projectId=$('f-proj').value||null; k.due=$('f-due').value||null;
+  $('f-save').onclick=()=>{ snap(); k.title=$('f-title').value.trim()||k.title; k.projectId=$('f-proj').value||null; k.due=$('f-due').value||null; k.start=$('f-start').value||'';
+    if(k.start&&k.due&&k.start>k.due) k.start=k.due;
     k.owner=$('f-owner').value; k.source=$('f-src').value; k.note=$('f-note').value;
     let target=st; if(target==='inbox' && k.status==='inbox' && k.projectId && k.due) target='todo';
     setStatus(k,target); save(); closeSheet(); render(); toast(target==='todo'&&st==='inbox'?'整理して「未着手」に移しました':'保存しました',true); };
@@ -2927,7 +2987,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.28e';
+const APP_VER='2026.09.29a';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
