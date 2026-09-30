@@ -1108,6 +1108,7 @@ optgroup{font-weight:700;color:var(--sub)}
 .hmsum .g b{color:var(--teal)}
 .hmtop{display:grid;grid-template-columns:1fr 90px;gap:8px 10px;margin-bottom:6px}
 .hmtop .wide{grid-column:1/-1}
+.payone{display:flex;gap:6px;flex-wrap:wrap;padding:0 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .hmsec{margin-top:14px}
 .hmh{font-weight:700;font-size:13.5px;margin-bottom:6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.hmh small{font-weight:400;color:var(--sub);font-size:11.5px}
 .hmrow{display:grid;gap:6px 8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:8px;
@@ -1130,7 +1131,7 @@ optgroup{font-weight:700;color:var(--sub)}
 .hmx{width:36px;height:40px;border:0;background:transparent;color:var(--sub);font-size:20px;cursor:pointer}
 @media (min-width:1024px){
   .hmrow{grid-template-columns:minmax(130px,1.6fr) minmax(100px,1.2fr) 58px 58px 116px 70px 96px 96px minmax(104px,1fr) 80px 32px;grid-template-areas:"role vend need days unit hrs sell price g pname x"}
-  .hmtop{grid-template-columns:1fr 110px 220px}.hmtop .wide{grid-column:auto}
+  .hmtop{grid-template-columns:1fr 110px 200px 200px}.hmtop .wide{grid-column:auto}
   .hmrow.me{grid-template-columns:minmax(130px,1.6fr) minmax(160px,2fr) 58px 150px minmax(104px,1fr) 32px;grid-template-areas:"role vend days sell g x"}
   .hmrow.ex{grid-template-columns:minmax(160px,2fr) minmax(100px,1.2fr) 120px 120px minmax(104px,1fr) 32px;grid-template-areas:"role vend sell price g x"}
   .hmrow .hrs[hidden]{display:flex!important;visibility:hidden}
@@ -1751,6 +1752,9 @@ document.addEventListener('click',e=>{
   if(act==='backup') openBackup();
   if(act==='projMoney') openHaiMoney(a.dataset.pid);
   if(act==='moneyFor2') openProjMoney(a.dataset.pid);
+  if(act==='payOneToday'){ const p=P(a.dataset.pid); if(!p) return; snap(); const n=iso(today()); p.payOut=n; const c=clientOf(p), bm=billMonthOf(p,c); S.pays=S.pays||{};
+    new Set(projMoney(p).lines.filter(l=>l.kind==='cost').map(l=>l.vendor)).forEach(vn=>{ const k=vn+'|'+bm+'|'+n; S.pays[k]=Object.assign({},S.pays[k]||{},{status:'支払済',at:Date.now(),dates:{'支払済':n}}); });
+    save(); closeSheet(); render(); toast(`${short(p)}の支払いを、今日払った分として分けました`,true); }
   if(act==='toggleOld'){ showOld=!showOld; renderProjects(); }
   if(act==='boshu') openBoshu(a.dataset.pid);
   if(act==='rescue'){ const p=P(a.dataset.pid), s=p&&(p.slots||[]).find(x=>x.id===a.dataset.sid); if(s) openRescue(p,s); }
@@ -2256,9 +2260,9 @@ function billsAll(){ const out={};
   return arr; }
 function paysAll(){ const out={};
   billsAll().forEach(b=>b.projects.forEach(({p,m})=>m.lines.filter(l=>l.kind==='cost').forEach(l=>{
-    const key=l.vendor+'|'+b.bm; const v=out[key]=out[key]||{key,vendor:l.vendor,bm:b.bm,amt:0,items:[],dues:[]}; v.amt+=l.amt; v.items.push({p,l}); v.dues.push(b.due); })));
+    const key=l.vendor+'|'+b.bm+(p.payOut?'|'+p.payOut:''); const v=out[key]=out[key]||{key,vendor:l.vendor,bm:b.bm,amt:0,items:[],dues:[],fixDue:p.payOut||''}; v.amt+=l.amt; v.items.push({p,l}); v.dues.push(b.due); })));
   return Object.values(out).map(v=>{ const vm=(S.vendors||[]).find(x=>x.name===v.vendor); v.rule=(vm&&vm.rule)||'match';
-    if(v.rule==='60'){ const [y,m]=v.bm.split('-').map(Number); v.due=iso(add(new Date(y,m-1,lastDay(y,m)),60)); } else v.due=v.dues.sort().slice(-1)[0];
+    if(v.fixDue) v.due=v.fixDue; else if(v.rule==='60'){ const [y,m]=v.bm.split('-').map(Number); v.due=iso(add(new Date(y,m-1,lastDay(y,m)),60)); } else v.due=v.dues.sort().slice(-1)[0];
     const st=(S.pays||{})[v.key]||{}; v.autoDue=v.due; if(st.dates&&st.dates.due) v.due=st.dates.due; v.status=st.status||'請求書待ち'; v.ramt=st.snap?st.snap.amt:v.amt; return v; }); }
 function moneyAlerts(){ const n=iso(today()), out=[];
   billsAll().forEach(b=>{ const [y,m]=b.bm.split('-').map(Number); const close=iso(new Date(y,m-1,lastDay(y,m)));
@@ -2341,7 +2345,7 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   const g=sale-cost, exp=expensesFor(moneyMonth);
   const billRow=b=>{ const late=b.status!=='入金済'&&n>b.due; return `<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分${b.fixDue?'（個別の入金日）':''}　${b.orphan?'記録のみ':b.projects.length+'案件'}　入金予定 ${md(fromIso(b.due))}</span></div>
     <div class="mr"><em>${yen(b.rsale+(taxIn?tax(b.rsale):0))}</em><i class="chip ${BST[b.status]} ${late?'late':''}">${late?'入金遅れ':b.status}</i>${((S.bills||{})[b.key]||{}).files&&(S.bills[b.key].files||[]).length?'<i class="chip">請求書あり</i>':''}${b.changed?'<i class="chip late">請求後に変更あり</i>':''}</div></li>`; };
-  const payRow=v=>{ const d=dd(fromIso(v.due),today()); const hot=v.status!=='支払済'&&d<=3; return `<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分　支払 ${md(fromIso(v.due))}（${v.rule==='60'?'60日払い':'入金に合わせる'}）</span></div>
+  const payRow=v=>{ const d=dd(fromIso(v.due),today()); const hot=v.status!=='支払済'&&d<=3; return `<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分${v.fixDue?'（個別の支払日）':''}　支払 ${md(fromIso(v.due))}（${v.rule==='60'?'60日払い':'入金に合わせる'}）</span></div>
     <div class="mr"><em>${yen(v.ramt+(taxIn?tax(v.ramt):0))}</em><i class="chip ${PST[v.status]} ${hot?'hot':''}">${v.status}</i>${((S.pays||{})[v.key]||{}).files&&(S.pays[v.key].files||[]).length?'<i class="chip">請求書あり</i>':''}</div></li>`; };
   const gapPs=S.projects.filter(p=>p.kind!=='long'&&(p.slots||[]).length&&moneyGaps(p).length&&billMonthOf(p,clientOf(p))===moneyMonth);
   el.innerHTML=segP+nav+(gapPs.length?`<div class="sec"><h2 style="color:var(--purple)">お金に入っていない案件 <small>${gapPs.length}件</small></h2><ul class="mlist">${gapPs.map(p=>`<li class="mrow" data-act="projMoney" data-pid="${p.id}"><div class="ml"><b>${esc(p.name)}</b><span>${esc(moneyGaps(p).join('・'))}が未入力</span></div><div class="mr"><em>›</em></div></li>`).join('')}</ul></div>`:'')+`
@@ -2524,7 +2528,8 @@ function openPay(key){ const v=paysAll().find(x=>x.key===key); if(!v) return; S.
   ${dueOverrideUI('p-due',((S.pays||{})[key]||{}).dates&&S.pays[key].dates.due,v.autoDue||v.due)}
   <div class="fld"><span class="lb">状況</span><div class="seg" id="ps">${['請求書待ち','受領','支払済'].map(x=>`<button type="button" data-v="${x}" aria-pressed="${v.status===x}">${x==='受領'?'請求書を受け取った':x==='支払済'?'支払った':'請求書待ち'}</button>`).join('')}</div></div>
   <div class="fld"><span class="lb">受け取った請求書</span>${filesHtml((S.pays[key]||{}).files,'受領')}${attachUI('p-file')}</div>
-  <div class="fld"><span class="lb">明細（受け取った請求書と照らし合わせる用）</span><div class="pvlist">${v.items.map(({p,l})=>`<div><b>${esc(short(p))}</b><span>${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}</span></div>`).join('')}</div></div>
+  <div class="fld"><span class="lb">明細（案件ごとに、ほかと別の日に払えます）</span><div class="pvlist">${v.items.map(({p,l})=>`<div><b>${esc(short(p))}${p.payOut?`<br><small style="color:var(--blue)">個別 ${md(fromIso(p.payOut))}</small>`:''}</b><span>${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}</span></div>
+    ${v.items.length>1||!p.payOut?`<div class="payone"><button type="button" class="btn sm" data-act="payOneToday" data-pid="${p.id}">この案件だけ今日払った</button><button type="button" class="btn sm" data-act="projMoney" data-pid="${p.id}">この案件だけ日付を変える</button></div>`:''}`).join('')}</div></div>
   <div class="acts"><span></span><button class="btn" id="p-close">閉じる</button></div>`);
   $('pr').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; S.vendors=S.vendors||[]; let vm=S.vendors.find(z=>z.name===v.vendor); if(!vm){ vm={name:v.vendor}; S.vendors.push(vm); } vm.rule=x.dataset.v; save(); render(); openPay(key); });
   $('ps').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; snap(); const prevP=S.pays[key]||{}; S.pays[key]=Object.assign(prevP, {status:x.dataset.v, at:Date.now()}); S.pays[key].dates=S.pays[key].dates||{}; if(x.dataset.v!=='請求書待ち') S.pays[key].dates[x.dataset.v]=S.pays[key].dates[x.dataset.v]||iso(today()); else S.pays[key].dates={}; if(x.dataset.v==='請求書待ち') delete S.pays[key].snap; else if(!prevP.snap) S.pays[key].snap={amt:v.amt}; save(); closeSheet(); render(); toast(`「${x.textContent}」にしました`,true); });
@@ -2596,6 +2601,7 @@ function openHaiMoney(pid,focus){ const p=P(pid); if(!p) return; p.slots=p.slots
     <label class="hmc wide">元請け<select id="hm-client"><option value="">未設定</option>${(S.clients||[]).map(x=>`<option value="${x.id}" ${x.id===p.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
     <label class="hmc">管理費%<input id="hm-fee" class="hmn" type="number" inputmode="decimal" value="${esc(p.feeRate||'')}" placeholder="0"></label>
     <label class="hmc wide">入金予定日（この案件だけ変えるとき）<input id="hm-due" type="date" value="${esc(p.payDue||'')}"></label>
+    <label class="hmc wide">手配先への支払日（この案件だけ変えるとき）<input id="hm-pout" type="date" value="${esc(p.payOut||'')}"></label>
   </div>
   <div class="hmsec"><div class="hmh">スタッフの手配<small>請け・払いは1人あたり（時給なら1時間あたり）</small></div><div id="hmHai">${hai.map(rowHai).join('')}</div>
     <button type="button" class="addslot" id="hm-addHai">＋ 職種を追加</button></div>
@@ -2628,6 +2634,7 @@ function openHaiMoney(pid,focus){ const p=P(pid); if(!p) return; p.slots=p.slots
   $('hm-client').onchange=e=>{ p.clientId=e.target.value; paint(); hmSave(); };
   $('hm-fee').oninput=e=>{ p.feeRate=e.target.value===''?0:+e.target.value; paint(); hmSave(); };
   $('hm-due').addEventListener('change',e=>{ p.payDue=e.target.value||''; hmSave(); });
+  $('hm-pout').addEventListener('change',e=>{ p.payOut=e.target.value||''; hmSave(); });
   const addRow=(kind)=>{ snap(); if(kind==='hai'){ const s={id:uid(),role:'',need:1,days:1,vendor:'',type:p.haiType||'枠受け',committed:false,unit:'日給',sell:'',price:'',people:[]}; p.slots.push(s); if(!(p.modules||[]).includes('手配')) p.modules=[...(p.modules||[]),'手配']; $('hmHai').insertAdjacentHTML('beforeend',rowHai(s)); $('hmHai').lastElementChild.querySelector('input').focus(); }
     if(kind==='me'){ const s={id:uid(),role:'ディレクター',need:1,days:1,vendor:'自社',self:true,type:'人出し',committed:true,sell:'',price:'',people:[{name:company().person||'中村'}]}; p.slots.push(s); $('hmMe').insertAdjacentHTML('beforeend',rowMe(s)); $('hmMe').lastElementChild.querySelector('[data-f="sell"]').focus(); }
     if(kind==='ex'){ const x={id:uid(),label:'',vendor:'',sell:'',cost:''}; p.extras.push(x); $('hmEx').insertAdjacentHTML('beforeend',rowEx(x)); $('hmEx').lastElementChild.querySelector('input').focus(); }
@@ -3254,7 +3261,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29i';
+const APP_VER='2026.09.29j';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
