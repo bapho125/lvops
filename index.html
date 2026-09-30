@@ -1497,7 +1497,10 @@ function guessAcct(t){ if(/役員報酬/.test(t)) return '役員報酬'; if(/給
 const NOTAX_ACCTS=new Set(['借入金の返済','支払利息','給料手当','役員報酬','法定福利費','租税公課','保険料']); // 消費税のかからない支払い
 const isNoTax=x=>x&&(x.taxType==='none'||(x.taxType!=='tax10'&&NOTAX_ACCTS.has(x.acct)));
 const taxChip=x=>isNoTax(x)?'税なし':x.taxIncl?'税込':'税抜';
-const NON_EXP=new Set(['借入金の返済']); // 経費ではない支払い（利益の計算には入れず、お金の出入りとして記録）
+const NON_EXP=new Set(['借入金の返済']);
+/* 手配先への支払いの消費税：インボイス未登録で「消費税を上乗せしない」と合意した手配先は0円 */
+const vNoTax=name=>{ const v=(S.vendors||[]).find(x=>x.name===name); return !!(v&&!v.regNo&&v.taxMode==='none'); };
+const vtax=(name,amt)=>vNoTax(name)?0:tax(amt); // 経費ではない支払い（利益の計算には入れず、お金の出入りとして記録）
 const ACCTS=['給料手当','役員報酬','法定福利費','租税公課','借入金の返済','支払利息','諸会費','旅費交通費','車両費','消耗品費','会議費','交際費','荷造運賃','賃借料','支払手数料','支払報酬','通信費','地代家賃','保険料','福利厚生費','雑費'];
 function addExpenseText(v,ig){ snap(); const r=parse(v,ig||{}), a=expAmount(v);
   const label=v.normalize('NFKC').replace(AMT_RE,'').replace(/経費|立替|立て替え/g,'').replace(r.hit||'\u0000','').replace(/\s{2,}/g,' ').trim()||'経費';
@@ -2327,8 +2330,8 @@ function moneyAlerts(){ const n=iso(today()), out=[];
     if(b.status==='未請求' && n>iso(add(fromIso(close),3))) out.push({lv:dd(today(),fromIso(close))>=14?'fatal':'crit',kind:'bill',key:b.key,title:`${cname(b.client)}　${m}月分の請求がまだです`,amt:b.sale+tax(b.sale)});
     if(b.status==='請求済' && n>b.due){ const late=dd(today(),fromIso(b.due)); out.push({lv:late>=7?'fatal':'crit',kind:'bill',key:b.key,title:`${cname(b.client)}　${m}月分の入金が${late}日遅れています（予定 ${md(fromIso(b.due))}）`,amt:b.sale+tax(b.sale)}); } });
   paysAll().forEach(v=>{ if(v.status==='支払済'||v.vendor==='手配先未定') return; const d=dd(fromIso(v.due),today()), m=mNum(v.bm);
-    if(d<=0) out.push({lv:'fatal',kind:'pay',key:v.key,title:`${v.vendor}への${m}月分の支払い${d<0?'期限を'+(-d)+'日過ぎています':'期限が今日です'}`,amt:v.amt+tax(v.amt)});
-    else if(d<=7) out.push({lv:'crit',kind:'pay',key:v.key,title:`${v.vendor}への${m}月分の支払い（${md(fromIso(v.due))}、あと${d}日）`,amt:v.amt+tax(v.amt)}); });
+    if(d<=0) out.push({lv:'fatal',kind:'pay',key:v.key,title:`${v.vendor}への${m}月分の支払い${d<0?'期限を'+(-d)+'日過ぎています':'期限が今日です'}`,amt:v.amt+vtax(v.vendor,v.amt)});
+    else if(d<=7) out.push({lv:'crit',kind:'pay',key:v.key,title:`${v.vendor}への${m}月分の支払い（${md(fromIso(v.due))}、あと${d}日）`,amt:v.amt+vtax(v.vendor,v.amt)}); });
   return out; }
 function moneyLi(a){ return `<li class="salert ${a.lv}"><div class="top"><b>${a.kind==='bill'?'入金・請求':'支払い'}</b><span>${esc(a.title)}</span></div>
   <div class="why">${yen(a.amt)}（税込）</div><div class="acts2"><button class="btn sm ${a.lv==='fatal'?'fatalbtn':'primary'}" data-act="moneyOpen" data-kind="${a.kind}" data-key="${esc(a.key)}">開く</button></div></li>`; }
@@ -2404,12 +2407,12 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   else { inB=bills.filter(b=>b.due.slice(0,7)===moneyMonth); outP=pays.filter(v=>v.due.slice(0,7)===moneyMonth); sale=inB.reduce((a,b)=>a+b.rsale+tax(b.rsale),0);
     const xi=expItems([moneyMonth]), amtX=i=>(i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross;
     cashExp=xi.filter(i=>!NON_EXP.has(i.x.acct)).reduce((a,i)=>a+amtX(i),0); cashNon=xi.filter(i=>NON_EXP.has(i.x.acct)).reduce((a,i)=>a+amtX(i),0);
-    cashPay=outP.reduce((a,v)=>a+v.ramt+tax(v.ramt),0); cost=cashPay+cashExp+cashNon; taxIn=true; }
+    cashPay=outP.reduce((a,v)=>a+v.ramt+vtax(v.vendor,v.ramt),0); cost=cashPay+cashExp+cashNon; taxIn=true; }
   const g=sale-cost, exp=expensesFor(moneyMonth);
   const billRow=b=>{ const late=b.status!=='入金済'&&n>b.due; return `<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分${b.fixDue?'（個別の入金日）':''}　${b.orphan?'記録のみ':b.projects.length+'案件'}　入金予定 ${md(fromIso(b.due))}</span></div>
     <div class="mr"><em>${yen(b.rsale+(taxIn?tax(b.rsale):0))}</em><i class="chip ${BST[b.status]} ${late?'late':''}">${late?'入金遅れ':b.status}</i>${((S.bills||{})[b.key]||{}).files&&(S.bills[b.key].files||[]).length?'<i class="chip">請求書あり</i>':''}${b.changed?'<i class="chip late">請求後に変更あり</i>':''}</div></li>`; };
   const payRow=v=>{ const d=dd(fromIso(v.due),today()); const hot=v.status!=='支払済'&&d<=3; return `<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分${v.fixDue?'（個別の支払日）':''}　支払 ${md(fromIso(v.due))}（${v.rule==='60'?'60日払い':'入金に合わせる'}）</span></div>
-    <div class="mr"><em>${yen(v.ramt+(taxIn?tax(v.ramt):0))}</em><i class="chip ${PST[v.status]} ${hot?'hot':''}">${v.status}</i>${((S.pays||{})[v.key]||{}).files&&(S.pays[v.key].files||[]).length?'<i class="chip">請求書あり</i>':''}</div></li>`; };
+    <div class="mr"><em>${yen(v.ramt+(taxIn?vtax(v.vendor,v.ramt):0))}</em><i class="chip ${PST[v.status]} ${hot?'hot':''}">${v.status}</i>${((S.pays||{})[v.key]||{}).files&&(S.pays[v.key].files||[]).length?'<i class="chip">請求書あり</i>':''}</div></li>`; };
   const gapPs=S.projects.filter(p=>p.kind!=='long'&&(p.slots||[]).length&&moneyGaps(p).length&&billMonthOf(p,clientOf(p))===moneyMonth);
   el.innerHTML=segP+nav+(gapPs.length?`<div class="sec"><h2 style="color:var(--purple)">お金に入っていない案件 <small>${gapPs.length}件</small></h2><ul class="mlist">${gapPs.map(p=>`<li class="mrow" data-act="projMoney" data-pid="${p.id}"><div class="ml"><b>${esc(p.name)}</b><span>${esc(moneyGaps(p).join('・'))}が未入力</span></div><div class="mr"><em>›</em></div></li>`).join('')}</ul></div>`:'')+`
   <div class="seg mmode"><button type="button" data-act="mMode" data-m="work" aria-pressed="${moneyMode==='work'}">粗利<small>稼働した月（月またぎは最終日の月）</small></button><button type="button" data-act="mMode" data-m="cash" aria-pressed="${moneyMode==='cash'}">資金繰り<small>お金が動く月</small></button></div>
@@ -2419,7 +2422,7 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   ${moneyMode==='work'?`<p class="hint">粗利は税抜きの金額です。自社の稼働（Luo）は支払いに含めていません。</p>`:'<p class="hint">資金繰りは消費税込みの金額です。「出ていく」には、手配先への支払いに加えて、経費と借入金の返済なども入っています。</p>'}
   <div class="sec msec"><h2>入ってくるお金 <small>元請けへの請求　${yen(inB.reduce((a,b)=>a+b.rsale+(taxIn?tax(b.rsale):0),0))}${taxIn?'':'（税抜）'}</small></h2>${inB.length?`<ul class="mlist">${inB.sort((a,b)=>a.due.localeCompare(b.due)).map(billRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}</div>
   ${moneyMode==='work'?`<details class="more mtax"><summary>この月の消費税（概算）　納める額の目安 ${yen(Math.max(0,taxFor([moneyMonth]).pay))}</summary>${taxBlock([moneyMonth],'')}</details>`:''}
-  <div class="sec msec"><h2>出ていくお金 <small>手配先への支払い　${yen(outP.reduce((a,v)=>a+v.ramt+(taxIn?tax(v.ramt):0),0))}${taxIn?'':'（税抜）'}</small></h2>${outP.length?`<ul class="mlist">${outP.sort((a,b)=>a.due.localeCompare(b.due)).map(payRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}
+  <div class="sec msec"><h2>出ていくお金 <small>手配先への支払い　${yen(outP.reduce((a,v)=>a+v.ramt+(taxIn?vtax(v.vendor,v.ramt):0),0))}${taxIn?'':'（税抜）'}</small></h2>${outP.length?`<ul class="mlist">${outP.sort((a,b)=>a.due.localeCompare(b.due)).map(payRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}
   ${moneyMode==='cash'?(()=>{ const xs=expItems([moneyMonth]).sort((a,b)=>String(a.date).localeCompare(String(b.date))); if(!xs.length) return '';
     const tot=xs.reduce((a,i)=>a+((i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross),0);
     return `<h2 style="margin-top:14px">出ていくお金 <small>経費・返済など　${yen(tot)}</small></h2><ul class="mlist">${xs.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}</b><span>${i.one?md(fromIso(i.date)):'毎月'}　${esc(i.x.acct||'')}</span></div><div class="mr"><em>${yen((i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross)}</em>${NON_EXP.has(i.x.acct)?'<i class="chip">経費外</i>':''}</div></li>`).join('')}</ul>`; })():''}</div>
@@ -2576,7 +2579,7 @@ function wireBillAttach(key,b){ const inp=$('b-file'); if(!inp) return; inp.onch
       const moved=b.status==='未請求'; if(moved) setBillStatusTo(key,b,'請求済'); save(); render(); openBill(key); toast(moved?'請求書を保存し、「請求書を送った」にしました':'請求書を保存しました',true); }
     catch(err){ st.textContent=''; toast(err.message||'保存できませんでした'); } }; }
 function wirePayAttach(key,v){ const inp=$('p-file'); if(!inp) return; inp.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const st=$('p-file-st'); st.textContent='保存中…';
-    const name=`${iso(today()).replace(/-/g,'')}_${safeName(v.vendor)}_受領_${yen(v.ramt+tax(v.ramt))}.${fileExt(f)}`;
+    const name=`${iso(today()).replace(/-/g,'')}_${safeName(v.vendor)}_受領_${yen(v.ramt+vtax(v.vendor,v.ramt))}.${fileExt(f)}`;
     try{ const r=await uploadToDrive(f,[ymLabel(v.bm),'受領'],name); snap(); S.pays[key]=S.pays[key]||{}; S.pays[key].files=(S.pays[key].files||[]).concat([{id:r.id,url:r.url,name:r.name,at:iso(today())}]);
       const moved=v.status==='請求書待ち'; if(moved) setPayStatusTo(key,v,'受領'); save(); render(); openPay(key); toast(moved?'請求書を保存し、「請求書を受け取った」にしました':'請求書を保存しました',true); }
     catch(err){ st.textContent=''; toast(err.message||'保存できませんでした'); } }; }
@@ -2602,7 +2605,7 @@ function openBill(key){ const b=billsAll().find(x=>x.key===key); if(!b) return; 
   const tsv=()=>{ let s='品目\t単価\t数量\t金額\n'; b.projects.forEach(({p,m:mm})=>mm.lines.filter(l=>l.kind==='sale').forEach(l=>{ s+=`${p.name} ${l.label}\t${l.unit||l.amt}\t${l.unit?l.qty*l.days:1}\t${l.amt}\n`; })); return s; };
   $('b-txt').onclick=async()=>toast(await copyText(txt())?'コピーしました':'コピーできませんでした');
   $('b-tsv').onclick=async()=>toast(await copyText(tsv())?'コピーしました':'コピーできませんでした'); }
-function openPay(key){ const v=paysAll().find(x=>x.key===key); if(!v) return; S.pays=S.pays||{}; const t=tax(v.amt), m=mNum(v.bm);
+function openPay(key){ const v=paysAll().find(x=>x.key===key); if(!v) return; S.pays=S.pays||{}; const t=vtax(v.vendor,v.amt), m=mNum(v.bm);
   openSheet(`<h3>${esc(v.vendor)}　${m}月分の支払い</h3>
   <div class="msum sm"><div><span>小計</span><b>${yen(v.amt)}</b></div><div><span>消費税10%</span><b>${yen(t)}</b></div><div class="g"><span>合計</span><b>${yen(v.amt+t)}</b></div></div>
   <div class="fld"><span class="lb">支払日の決め方（この手配先で覚えます）</span><div class="seg" id="pr"><button type="button" data-v="match" aria-pressed="${v.rule!=='60'}">入金に合わせる</button><button type="button" data-v="60" aria-pressed="${v.rule==='60'}">60日払い</button></div>
@@ -2818,7 +2821,8 @@ function openOrder(pid){ const p=P(pid); if(!p) return; const vs=[...new Set((p.
     const info=[['案件',p.name],['実施日',p.dateText||(p.kind==='long'?'':md(fromIso(p.showDate)))],['稼働時間',[p.workTime,p.timeNote].filter(Boolean).join('\n')],['集合',p.callTime||''],['会場',[p.venue,p.venueNote].filter(Boolean).join('\n')],['アクセス',p.access||''],['服装',p.bring||''],['身だしなみ・注意',p.notes||''],
       ['ネーム提出',(p.slots||[]).some(s=>s.type==='枠受け')&&p.kind!=='long'?`${md(add(fromIso(p.showDate),-4))}までに（${(p.nameFields||['名前','ふりがな']).join('・')}）`:''],['お支払い',payInfo(v)],['ご回答期限',ans]].filter(x=>x[1]);
     const vm=(S.vendors||[]).find(x=>x.name===v)||{};
-    return {title:'手配依頼書',to:`${vm.fullName||v} ${vm.kind==='個人'?'様':'御中'}`,lead:'下記のとおり手配をお願い申し上げます。',meta:[['依頼日',fmtDate(t)]],totalLabel:'ご依頼金額',total:od.total,sub:od.sub,tx:od.tx,lines:od.lines,info,notes:st.notes||''}; },
+    const nt=vNoTax(v); const note0=nt?'インボイス制度の登録がないため、ご依頼金額は消費税を上乗せしない金額で合意したものです。':'';
+    return {title:'手配依頼書',to:`${vm.fullName||v} ${vm.kind==='個人'?'様':'御中'}`,lead:'下記のとおり手配をお願い申し上げます。',meta:[['依頼日',fmtDate(t)]],totalLabel:'ご依頼金額',total:nt?od.sub:od.total,sub:od.sub,tx:nt?0:od.tx,lines:od.lines,info,notes:[note0,st.notes||''].filter(Boolean).join('\n')}; },
     {init:{v:vs[0],ans:'tmr',notes:''},controls:`<div class="fld"><span class="lb">依頼先</span><div class="seg" data-k="v">${vs.map((v,i)=>`<button type="button" data-v="${esc(v)}" aria-pressed="${i===0}">${esc(v)}</button>`).join('')}</div></div>
       <div class="row2"><div class="fld"><span class="lb">ご回答期限</span><div class="seg" data-k="ans"><button type="button" data-v="today" aria-pressed="false">今日中</button><button type="button" data-v="tmr" aria-pressed="true">明日</button><button type="button" data-v="d2" aria-pressed="false">明後日</button><button type="button" data-v="none" aria-pressed="false">なし</button></div></div></div>
       <div class="fld"><label>備考（空欄なら出しません）</label><input data-k="notes" placeholder="例：前日18時までに最終確定のご連絡をお願いします"></div>`,
@@ -3268,7 +3272,7 @@ function openPartners(tab){ tab=tab||'c'; S.clients=S.clients||[]; S.vendors=S.v
   const vUsed=nm=>S.projects.filter(p=>(p.slots||[]).some(s=>s.vendor===nm)).length;
   const cRows=S.clients.slice().sort((a,b)=>used(b.id)-used(a.id)).map(c=>`<li class="mrow" data-act="clientEdit" data-id="${c.id}"><div class="ml"><b>${esc(c.name)}</b><span>${esc([c.person,c.tel,c.tool].filter(Boolean).join('　')||'連絡先未登録')}　${+c.closeDay>=28?'月末':c.closeDay+'日'}締め・${c.payMonths==2?'翌々月':c.payMonths==3?'3か月後':'翌月'}${+c.payDay>=28?'末':c.payDay+'日'}入金</span></div><div class="mr"><i class="chip">${used(c.id)}案件</i></div></li>`).join('');
   const names=vendorNamesAll().sort((a,b)=>vUsed(b)-vUsed(a));
-  const vRows=names.map(nm=>{ const v=S.vendors.find(x=>x.name===nm)||{}; return `<li class="mrow" data-act="vendorEdit" data-name="${esc(nm)}"><div class="ml"><b>${esc(nm)}</b><span>${esc([v.person,v.tel,v.tool].filter(Boolean).join('　')||'連絡先未登録')}　${v.kind||'法人'}　${v.rule==='60'?'60日払い':'入金に合わせる'}${v.regNo?'':'　登録番号なし'}</span></div><div class="mr"><i class="chip">${vUsed(nm)}案件</i>${S.vendors.some(x=>x.name===nm)?'':'<i class="chip late">未登録</i>'}</div></li>`; }).join('');
+  const vRows=names.map(nm=>{ const v=S.vendors.find(x=>x.name===nm)||{}; return `<li class="mrow" data-act="vendorEdit" data-name="${esc(nm)}"><div class="ml"><b>${esc(nm)}</b><span>${esc([v.person,v.tel,v.tool].filter(Boolean).join('　')||'連絡先未登録')}　${v.kind||'法人'}　${v.rule==='60'?'60日払い':'入金に合わせる'}${v.regNo?'':(v.taxMode==='none'?'　登録番号なし・消費税なし':'　登録番号なし')}</span></div><div class="mr"><i class="chip">${vUsed(nm)}案件</i>${S.vendors.some(x=>x.name===nm)?'':'<i class="chip late">未登録</i>'}</div></li>`; }).join('');
   openSheet(`<h3>取引先</h3>
   <div class="seg" id="pt-tab"><button type="button" data-v="c" aria-pressed="${tab==='c'}">元請け（${S.clients.length}）</button><button type="button" data-v="v" aria-pressed="${tab==='v'}">手配先（${names.length}）</button></div>
   <div style="margin:12px 0"><button class="btn sm primary" data-act="${tab==='c'?'clientEdit':'vendorEdit'}" data-id="" data-name="">＋ ${tab==='c'?'元請け':'手配先'}を追加</button></div>
@@ -3300,14 +3304,16 @@ function openVendorEdit(name){ S.vendors=S.vendors||[]; let v=name?S.vendors.fin
   <div class="row2"><div class="fld"><span class="lb">区分</span><div class="seg" id="ve-kind"><button type="button" data-v="法人" aria-pressed="${d.kind!=='個人'}">法人</button><button type="button" data-v="個人" aria-pressed="${d.kind==='個人'}">個人</button></div></div>
     <div class="fld"><span class="lb">支払日</span><div class="seg" id="ve-rule"><button type="button" data-v="match" aria-pressed="${d.rule!=='60'}">入金に合わせる</button><button type="button" data-v="60" aria-pressed="${d.rule==='60'}">60日払い</button></div></div></div>
   ${pf('ve-reg','インボイス登録番号',d.regNo,'T+13桁（なければ空欄）')}
+  <div class="fld" id="ve-taxbox"><span class="lb">消費税の扱い（登録番号がないとき）</span><div class="seg" id="ve-tax"><button type="button" data-v="add" aria-pressed="${d.taxMode!=='none'}">10%を上乗せして払う</button><button type="button" data-v="none" aria-pressed="${d.taxMode==='none'}">上乗せしない（本人と合意済み）</button></div>
+    <p class="hint">「上乗せしない」にすると、支払いは金額そのまま（消費税0円）で計算し、差し引ける消費税は払った額を税込として計算します。登録番号を入れた手配先は、いつも10%を上乗せします。</p></div>
   <div class="row2">${pf('ve-person','担当者（「、」で区切る）',d.person,'例：栢森')}${pf('ve-tool','連絡手段',d.tool,'例：LINE')}</div>
   <div class="row2">${pf('ve-tel','電話',d.tel,'','tel')}${pf('ve-mail','メール',d.mail,'','email')}</div>
   ${pf('ve-addr','住所',d.addr,'')}
   <div class="fld"><label for="ve-note">メモ（得意な職種、単価の目安、注意点など）</label><textarea id="ve-note" style="min-height:60px">${esc(d.note||'')}</textarea></div>
   <div class="acts">${v?'<button class="btn danger" id="ve-del">一覧から外す</button>':'<span></span>'}<div style="display:flex;gap:8px"><button class="btn" id="ve-back">戻る</button><button class="btn primary" id="ve-save">保存</button></div></div>`);
-  let kind=d.kind||'法人', rule=d.rule||'match';
+  let kind=d.kind||'法人', rule=d.rule||'match', taxMode=d.taxMode==='none'?'none':'add';
   const one=(id,cb)=>$(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; cb(b.dataset.v); [...$(id).children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); });
-  one('ve-kind',x=>kind=x); one('ve-rule',x=>rule=x);
+  one('ve-kind',x=>kind=x); one('ve-rule',x=>rule=x); one('ve-tax',x=>taxMode=x);
   $('ve-back').onclick=()=>openPartners('v');
   $('ve-save').onclick=()=>{ const nn=$('ve-name').value.trim(); if(!nn){ toast('表示名を入れてください'); return; }
     if(nn!==name&&S.vendors.some(x=>x.name===nn)){ toast('同じ表示名の手配先がすでにあります'); return; } snap();
@@ -3316,7 +3322,7 @@ function openVendorEdit(name){ S.vendors=S.vendors||[]; let v=name?S.vendors.fin
       S.projects.forEach(p=>{ (p.slots||[]).forEach(s=>{ if(s.vendor===name) s.vendor=nn; }); (p.extras||[]).forEach(x=>{ if(x.vendor===name) x.vendor=nn; }); });
       Object.keys(S.pays||{}).forEach(k=>{ if(k.split('|')[0]===name){ const nk=nn+'|'+k.split('|')[1]; S.pays[nk]=S.pays[k]; delete S.pays[k]; } });
       (S.expenses||[]).forEach(x=>{ if(x.vendor===name) x.vendor=nn; }); }
-    Object.assign(v,{name:nn,fullName:$('ve-full').value.trim(),kind,rule,regNo:$('ve-reg').value.trim(),person:$('ve-person').value.trim(),tool:$('ve-tool').value.trim(),tel:$('ve-tel').value.trim(),mail:$('ve-mail').value.trim(),addr:$('ve-addr').value.trim(),note:$('ve-note').value.trim()});
+    Object.assign(v,{name:nn,fullName:$('ve-full').value.trim(),kind,rule,taxMode:$('ve-reg').value.trim()?'add':taxMode,regNo:$('ve-reg').value.trim(),person:$('ve-person').value.trim(),tool:$('ve-tool').value.trim(),tel:$('ve-tel').value.trim(),mail:$('ve-mail').value.trim(),addr:$('ve-addr').value.trim(),note:$('ve-note').value.trim()});
     save(); render(); toast('保存しました',true); openPartners('v'); };
   if($('ve-del')) $('ve-del').onclick=()=>{ if(!confirm('この手配先を一覧から外しますか？（手配枠に入っている名前はそのまま残ります）')) return; snap(); S.vendors=S.vendors.filter(x=>x!==v); save(); render(); toast('外しました',true); openPartners('v'); }; }
 /* 入金日・支払日を、その月だけ手で変える */
@@ -3349,7 +3355,7 @@ function addMoneyText(m){ snap(); const p=m.proj; p.extras=p.extras||[];
 function vendorDeductRate(name,bm){ const v=(S.vendors||[]).find(x=>x.name===name); if(v&&v.regNo) return 1; return bm<='2026-09'?0.8:bm<='2029-09'?0.5:0; }
 function taxFor(months){ const set=new Set(months); let out=0, inPay=0, inExp=0, noReg=new Set();
   billsAll().filter(b=>set.has(b.bm)).forEach(b=>{ out+=tax(b.rsale); });
-  paysAll().filter(v=>set.has(v.bm)).forEach(v=>{ const r=vendorDeductRate(v.vendor,v.bm); if(r<1) noReg.add(v.vendor); inPay+=Math.floor(tax(v.ramt)*r); });
+  paysAll().filter(v=>set.has(v.bm)).forEach(v=>{ const r=vendorDeductRate(v.vendor,v.bm); if(r<1) noReg.add(v.vendor); const t=vNoTax(v.vendor)?Math.floor(v.ramt*10/110):vtax(v.vendor,v.ramt); inPay+=Math.floor(t*r); });
   expItems(months).forEach(i=>{ if(isNoTax(i.x)||NON_EXP.has(i.x.acct)) return; inExp+=Math.max(0,(i.gross||0)-(i.net||0)); });
   const pay=out-inPay-inExp; return {out,inPay,inExp,pay,twenty:Math.floor(out*0.2),noReg:[...noReg]}; }
 function taxBlock(months,title){ const t=taxFor(months);
@@ -3362,7 +3368,7 @@ function taxBlock(months,title){ const t=taxFor(months);
 /* 売掛（まだ入金されていない）と買掛（まだ払っていない）の残り */
 function openBalances(){ const n=iso(today()); const bs=billsAll().filter(b=>b.status!=='入金済'&&b.rsale), ps=paysAll().filter(v=>v.status!=='支払済'&&v.ramt&&v.vendor!=='手配先未定');
   return `<div class="sec"><h2>まだ入金されていないお金 <small>${yen(bs.reduce((a,b)=>a+b.rsale+tax(b.rsale),0))}（税込）</small></h2>${bs.length?`<ul class="mlist">${bs.sort((a,b)=>a.due.localeCompare(b.due)).map(b=>`<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分　入金予定 ${md(fromIso(b.due))}${n>b.due?'　<b style="color:var(--fatal)">遅れ</b>':''}</span></div><div class="mr"><em>${yen(b.rsale+tax(b.rsale))}</em><i class="chip">${b.status}</i></div></li>`).join('')}</ul>`:'<div class="empty">ありません。</div>'}</div>
-  <div class="sec"><h2>まだ払っていないお金 <small>${yen(ps.reduce((a,v)=>a+v.ramt+tax(v.ramt),0))}（税込）</small></h2>${ps.length?`<ul class="mlist">${ps.sort((a,b)=>a.due.localeCompare(b.due)).map(v=>`<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分　支払 ${md(fromIso(v.due))}${n>v.due?'　<b style="color:var(--fatal)">過ぎています</b>':''}</span></div><div class="mr"><em>${yen(v.ramt+tax(v.ramt))}</em><i class="chip">${v.status}</i></div></li>`).join('')}</ul>`:'<div class="empty">ありません。</div>'}</div>`; }
+  <div class="sec"><h2>まだ払っていないお金 <small>${yen(ps.reduce((a,v)=>a+v.ramt+vtax(v.vendor,v.ramt),0))}（税込）</small></h2>${ps.length?`<ul class="mlist">${ps.sort((a,b)=>a.due.localeCompare(b.due)).map(v=>`<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分　支払 ${md(fromIso(v.due))}${n>v.due?'　<b style="color:var(--fatal)">過ぎています</b>':''}</span></div><div class="mr"><em>${yen(v.ramt+vtax(v.vendor,v.ramt))}</em><i class="chip">${v.status}</i></div></li>`).join('')}</ul>`:'<div class="empty">ありません。</div>'}</div>`; }
 function monthTable(r,months){ const cm=iso(today()).slice(0,7);
   return `<div class="sec"><h2>月ごとの数字 <small>税抜</small></h2><div class="tblwrap"><table class="mtbl"><thead><tr><th>月</th><th>売上</th><th>支払</th><th>粗利</th><th>経費</th><th>利益</th></tr></thead><tbody>${months.map(m=>{ const o=r.byM[m], g=o.sale-o.cost, pr=g-o.exp; return `<tr class="${m>cm?'fut':''}"><td>${mNum(m)}月${m>cm?'<small>予定</small>':''}</td><td>${yen(o.sale)}</td><td>${yen(o.cost)}</td><td>${yen(g)}</td><td>${yen(o.exp)}</td><td class="${pr<0?'neg':''}">${yen(pr)}</td></tr>`; }).join('')}</tbody><tfoot><tr><td>合計</td><td>${yen(r.sale)}</td><td>${yen(r.cost)}</td><td>${yen(r.gross)}</td><td>${yen(r.exp)}</td><td>${yen(r.profit)}</td></tr></tfoot></table></div></div>`; }
 
@@ -3463,7 +3469,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29s';
+const APP_VER='2026.09.29t';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
