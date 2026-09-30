@@ -1097,6 +1097,46 @@ body{line-break:strict}
 .sync{cursor:pointer}
 .mlist .mrow .mr .chip+.chip{margin-top:2px}
 optgroup{font-weight:700;color:var(--sub)}
+
+.pmgap{display:block;width:100%;text-align:left;margin-top:10px;padding:8px 12px;border:1px dashed var(--purple);border-radius:var(--r);background:color-mix(in oklab,var(--purple) 8%,transparent);color:var(--ink);font-size:12.5px;cursor:pointer}
+.pmgap b{color:var(--purple)}
+
+/* 手配とお金の画面 */
+.hmsum{position:sticky;top:-22px;z-index:5;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;margin-bottom:12px;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.hmsum div{padding:8px 10px;border-left:1px solid var(--line);display:flex;flex-direction:column}.hmsum div:first-child{border-left:0}
+.hmsum span{font-size:11px;color:var(--sub)}.hmsum b{font-family:var(--display);font-size:20px;font-weight:600;white-space:nowrap}.hmsum small{font-size:11px;color:var(--sub)}
+.hmsum .g b{color:var(--teal)}
+.hmtop{display:grid;grid-template-columns:1fr 90px;gap:8px 10px;margin-bottom:6px}
+.hmtop .wide{grid-column:1/-1}
+.hmsec{margin-top:14px}
+.hmh{font-weight:700;font-size:13.5px;margin-bottom:6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.hmh small{font-weight:400;color:var(--sub);font-size:11.5px}
+.hmrow{display:grid;gap:6px 8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:8px;
+  grid-template-columns:repeat(6,minmax(0,1fr)) 36px;
+  grid-template-areas:"role role role vend vend vend x" "need need days days unit unit unit" "hrs hrs hrs . . . ." "sell sell sell price price price price" "pname pname pname g g g g"}
+.hmrow.me{grid-template-areas:"role role role vend vend vend x" "days days sell sell sell sell sell" "g g g g g g g"}
+.hmrow.ex{grid-template-areas:"role role role vend vend vend x" "sell sell sell price price price price" "g g g g g g g"}
+.hmrow .role{grid-area:role}.hmrow .vend{grid-area:vend}.hmrow .hmx{grid-area:x}.hmrow .a-need{grid-area:need}.hmrow .a-days{grid-area:days}
+.hmrow .hmu{grid-area:unit;margin:0;align-self:end;display:flex;flex-wrap:nowrap;gap:4px}.hmrow .hmu button{height:40px;flex:1;min-width:0;padding:0 6px}.hmrow .hrs{grid-area:hrs}
+.hmrow .a-sell{grid-area:sell}.hmrow .a-price{grid-area:price}.hmrow .hmp{grid-area:pname}.hmrow .hmg{grid-area:g;align-self:center}
+.hmc{display:flex;flex-direction:column;font-size:11px;color:var(--sub);gap:3px;min-width:0}
+.hmc[hidden]{display:none!important}
+.hmn::-webkit-outer-spin-button,.hmn::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.hmn{-moz-appearance:textfield}
+.hmc input,.hmc select,.hmt{height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);padding:0 10px;font-size:16px;min-width:0;width:100%;box-sizing:border-box}
+.hmn{font-family:var(--display);font-weight:600;text-align:right}
+.hmn.miss{border-color:var(--purple);background:color-mix(in oklab,var(--purple) 8%,var(--paper))}
+.hmg{font-size:12.5px;font-weight:700;color:var(--teal);text-align:right}.hmg.neg{color:var(--fatal)}
+.hmp{height:34px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font-size:12.5px;font-weight:700;padding:0 10px;cursor:pointer}
+.hmp.ok{border-color:var(--teal);color:var(--teal)}
+.hmx{width:36px;height:40px;border:0;background:transparent;color:var(--sub);font-size:20px;cursor:pointer}
+@media (min-width:1024px){
+  .hmrow{grid-template-columns:minmax(130px,1.6fr) minmax(100px,1.2fr) 58px 58px 116px 70px 96px 96px minmax(104px,1fr) 80px 32px;grid-template-areas:"role vend need days unit hrs sell price g pname x"}
+  .hmtop{grid-template-columns:1fr 110px 220px}.hmtop .wide{grid-column:auto}
+  .hmrow.me{grid-template-columns:minmax(130px,1.6fr) minmax(160px,2fr) 58px 150px minmax(104px,1fr) 32px;grid-template-areas:"role vend days sell g x"}
+  .hmrow.ex{grid-template-columns:minmax(160px,2fr) minmax(100px,1.2fr) 120px 120px minmax(104px,1fr) 32px;grid-template-areas:"role vend sell price g x"}
+  .hmrow .hrs[hidden]{display:flex!important;visibility:hidden}
+  .sheet.wide{width:min(1080px,calc(100vw - var(--side) - 24px))!important}
+  .hmrow{gap:6px}
+}
 </style>
 </head>
 <body>
@@ -1517,7 +1557,7 @@ function projEnd(p){ if(p.endDate) return p.endDate; const s0=fromIso(p.showDate
 function graceDays(){ const g=(S.settings||{}).graceDays; return g===undefined||g===null||g===''?5:+g; }
 function hasBill(p){ return !!(projMoney(p).sale&&clientOf(p)); }
 function billPending(p){ const m=projMoney(p); if(!m.sale) return false; const c=clientOf(p); if(!c) return false;
-  return (((S.bills||{})[c.id+'|'+billMonthOf(p,c)]||{}).status||'未請求')==='未請求'; }
+  return (((S.bills||{})[billKeyOf(p)]||{}).status||'未請求')==='未請求'; }
 function monthStart(d,off){ return iso(new Date(d.getFullYear(),d.getMonth()+(off||0),1)); }
 function isActive(p){ if(p.kind==='long') return true; const t=today(), end=projEnd(p);
   if(end>=monthStart(t)) return true;
@@ -1563,7 +1603,7 @@ function renderTime(){
       // 準備：スタッフの手配があるときだけ、案件を入れた日から本番の前日まで。手配が埋まったら消える
       if(hasHai(p)&&!filledAll(p)&&!tag){ const c0=p.createdAt?iso(new Date(+p.createdAt)):n; bars.push(bar(idx(c0<p.showDate?c0:iso(add(fromIso(p.showDate),-1))),showA-1,'g-prep','準備（手配中 '+haiSlots(p).reduce((a,x)=>a+Math.min(filledN(x),+x.need||0),0)+'/'+haiSlots(p).reduce((a,x)=>a+(+x.need||0),0)+'名）',`data-act="gotoProj" data-pid="${p.id}"`)); }
       bars.push(bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`));
-      const c=clientOf(p), st=c?(((S.bills||{})[c.id+'|'+billMonthOf(p,c)]||{})):{};
+      const c=clientOf(p), st=c?(((S.bills||{})[billKeyOf(p)]||{})):{};
       const billed=st.status&&st.status!=='未請求', billEnd=billed?(st.dates&&st.dates['請求済']?idx(st.dates['請求済']):showB+1):Math.max(showB+1,idx(n));
       if(projMoney(p).sale>0&&!(billed&&billEnd<=showB)) bars.push(bar(showB+1,billEnd,billed?'g-bill g-done':'g-bill','請求'+(billed?'済':'まだ'),`data-act="moneyFor" data-pid="${p.id}"`));
       // 前確：送る日に印
@@ -1632,7 +1672,8 @@ function renderProjects(){
         <button data-act="boshu" data-pid="${p.id}">募集文<small>手配先に送る</small></button>
         <button data-act="names" data-pid="${p.id}">ネーム表<small>元請けに出す</small></button>
         <button data-act="know" data-pid="${p.id}">資料・振り返り<small>${(p.review&&(p.review.good||p.review.bad||p.review.next))?'記入済み':'ナレッジに残す'}</small></button>
-        <button data-act="projMoney" data-pid="${p.id}">お金<small>請け・払い・粗利</small></button></div>`:''}
+        <button class="main" data-act="projMoney" data-pid="${p.id}">手配とお金<small>請け・払い・粗利</small></button></div>`:''}
+      ${(()=>{ const gp=p.kind==='long'?[]:moneyGaps(p); return gp.length?`<button class="pmgap" data-act="projMoney" data-pid="${p.id}"><b>お金に入っていません</b>：${esc(gp.slice(0,3).join('・'))}${gp.length>3?' ほか':''}が未入力 ›</button>`:''; })()}
       ${(()=>{ if(p.kind==='long') return ''; const m=projMoney(p); if(!m.sale&&!m.cost) return ''; const c=clientOf(p);
         return `<button class="pmoney" data-act="projMoney" data-pid="${p.id}"><span>売上<b>${yen(m.sale)}</b></span><span>支払<b>${yen(m.cost)}</b></span><span class="g">粗利<b>${yen(m.gross)}</b><small>${m.sale?Math.round(m.gross/m.sale*1000)/10:0}%</small></span><em>${esc(cname(c))}　›</em></button>`; })()}
       <div class="bar"><i style="width:${pct}%"></i></div>
@@ -1648,8 +1689,8 @@ function renderProjects(){
 function selfBlock(p){ const ss=(p.slots||[]).filter(isSelfSlot);
   return `<div class="slots selfbox"><div class="slh">自分の稼働${ss.length?`<span class="tot">${ss.reduce((a,s)=>a+(+s.days||1)*(+s.need||1),0)}人日</span>`:''}</div>
   ${ss.map(s=>`<div class="sline" data-act="selfEdit" data-pid="${p.id}" data-sid="${s.id}" role="button" tabindex="0"><div class="rn">${esc(s.role)}<small>${esc((s.people||[]).map(x=>x.name).filter(Boolean).join('、')||'自社')}　${fmtN(+s.days||1)}日</small></div><div class="cnt full">${s.sell?yen(+s.sell*(+s.need||1)*(+s.days||1)):'—'}</div></div>`).join('')}
-  <button class="addslot" data-act="selfEdit" data-pid="${p.id}" data-sid="">＋ 自分の稼働を追加</button></div>`; }
-function slotsBlock(p){ const sb=selfBlock(p); if(!(p.modules||[]).includes('手配')&&!(p.slots||[]).filter(x=>!isSelfSlot(x)).length) return sb; const tt=slotTotals(p);
+  <button class="addslot" data-act="projMoney" data-pid="${p.id}">＋ 自分の稼働を追加・金額を直す</button></div>`; }
+function slotsBlock(p){ const sb=selfBlock(p); if(!(p.modules||[]).includes('手配')&&!(p.slots||[]).filter(x=>!isSelfSlot(x)).length) return `<div class="slots"><button class="addslot" data-act="projMoney" data-pid="${p.id}">＋ スタッフの手配を追加</button></div>`+sb; const tt=slotTotals(p);
   const lines=(p.slots||[]).filter(x=>!isSelfSlot(x)).map(s=>{ const f=filledN(s), n=+s.need||0, i=slotIssue(p,s); const c=f>=n?'full':(s.type==='枠受け'&&i?(i.lv==='fatal'?'low fatal':'low'):'');
     return `<div class="sline" data-act="slot" data-pid="${p.id}" data-sid="${s.id}" role="button" tabindex="0">
       <div class="rn">${esc(s.role)}<small>${esc(s.vendor||'手配先未定')}${s.type==='人出し'?'　人出し':(s.committed?'　確約済み':'　確約まだ')}</small></div>
@@ -1657,9 +1698,9 @@ function slotsBlock(p){ const sb=selfBlock(p); if(!(p.modules||[]).includes('手
       ${moneyLine(s)}${i?`<div class="why ${i.lv==='fatal'?'fwhy':''}">${i.lv==='fatal'?'<span class="fbadge">至急</span>':''}${esc(i.text)}</div>`:''}</div>`; }).join('');
   return `<div class="slots"><div class="slh">手配<span class="kind ${p.haiType==='人出し'?'ns':''}">${esc(p.haiType||'枠受け')}</span>${tt.has?`<span class="tot">枠 ${tt.f}/${tt.n}名</span>`:''}
     </div>${lines}
-    <button class="addslot" data-act="slot" data-pid="${p.id}" data-sid="">＋ 手配の職種を追加</button></div>`+sb; }
+    <button class="addslot" data-act="projMoney" data-pid="${p.id}">＋ 手配の職種を追加・金額を直す</button></div>`+sb; }
 
-function ensureProjCreated(){ let ch=false; S.projects.forEach(p=>{ if(!p.createdAt){ const ts=S.tasks.filter(k=>k.projectId===p.id&&k.createdAt).map(k=>+k.createdAt); p.createdAt=ts.length?Math.min(...ts):Date.now(); ch=true; } }); if(ch) save(); }
+function ensureProjCreated(){ S.projects.forEach(p=>{ if(!p.createdAt){ const ts=S.tasks.filter(k=>k.projectId===p.id&&k.createdAt).map(k=>+k.createdAt); p.createdAt=ts.length?Math.min(...ts):Date.now(); } }); } // 保存はしない（ほかの変更と一緒に送られる）
 function render(){ try{ ensureProjCreated(); ensureZenTasks(); ensureReviewTasks(); }catch(e){ console.error(e); } renderToday(); renderTime(); renderBoard(); renderProjects(); renderMoney(); }
 
 /* ---------- actions ---------- */
@@ -1683,7 +1724,7 @@ document.addEventListener('click',e=>{
   if(act==='reviewSkip'){ const k=T(a.dataset.id); if(k){ snap(); const pj=P(k.projectId); if(pj){ pj.review=Object.assign({},pj.review||{},{skip:true}); } S.tasks=S.tasks.filter(x=>x.id!==k.id); save(); render(); toast('この案件の振り返りはなしにしました',true); } }
   if(act==='syncNow'){ if(!SERVER){ openConnect(null); return; } setSync('busy','同期中…'); if(dirty) pushSync(); else pullSync(true); return; }
   if(act==='tlMode'){ tlMode=a.dataset.m; renderTime(); return; }
-  if(act==='moneyFor'){ openProjMoney(a.dataset.pid); return; }
+  if(act==='moneyFor'){ openHaiMoney(a.dataset.pid); return; }
   if(act==='tlToday'){ const tl=$('tl'), w=tl.parentElement; w.scrollTo({left:Math.max(0,+(tl.dataset.today||0)*38-38*3),behavior:'smooth'}); }
   if(act==='sortInbox') openSort();
   if(act==='know') openKnow(a.dataset.pid);
@@ -1708,7 +1749,8 @@ document.addEventListener('click',e=>{
   if(act==='clients') openClients();
   if(act==='vendorsSet') openVendors();
   if(act==='backup') openBackup();
-  if(act==='projMoney') openProjMoney(a.dataset.pid);
+  if(act==='projMoney') openHaiMoney(a.dataset.pid);
+  if(act==='moneyFor2') openProjMoney(a.dataset.pid);
   if(act==='toggleOld'){ showOld=!showOld; renderProjects(); }
   if(act==='boshu') openBoshu(a.dataset.pid);
   if(act==='rescue'){ const p=P(a.dataset.pid), s=p&&(p.slots||[]).find(x=>x.id===a.dataset.sid); if(s) openRescue(p,s); }
@@ -1763,7 +1805,7 @@ function applyTpl(pid,silent){ const p=P(pid); if(!p) return 0; const t=today(),
 }
 
 /* ---------- sheets ---------- */
-function openSheet(html){ $('sheet').innerHTML='<div class="grab"></div>'+html; $('sheet').classList.add('on'); $('scrim').classList.add('on'); }
+function openSheet(html){ $('sheet').classList.toggle('wide',html.includes('id="hmSum"')); $('sheet').innerHTML='<div class="grab"></div>'+html; $('sheet').classList.add('on'); $('scrim').classList.add('on'); }
 function closeSheet(){ $('sheet').classList.remove('on'); $('scrim').classList.remove('on'); }
 $('scrim').addEventListener('click',closeSheet);
 
@@ -1810,11 +1852,12 @@ function openProj(pid){ const p=pid?P(pid):{id:'',name:'',alias:[],showDate:iso(
   <div class="fld"><label for="p-alias">呼び名（メモに書いたら自動で紐づく言葉。読点で区切る）</label><input id="p-alias" value="${esc((p.alias||[]).join('、'))}" placeholder="例：大塚、JSF東京"></div>
   <div class="row2"><div class="fld"><label for="p-date">本番日</label><input id="p-date" type="date" data-nonull="1" value="${p.showDate}"></div>
   <div class="fld"><label for="p-client">元請け（連絡文の宛先に使う）</label><input id="p-client" value="${esc(p.client||'')}" placeholder="例：〇〇制作 田中"></div></div>
-  <div class="row2"><div class="fld"><label for="p-venue">会場</label><input id="p-venue" value="${esc(p.venue||'')}" placeholder="例：東京 展示会場 西ホール"></div>
-  <div class="fld"><label for="p-call">集合</label><input id="p-call" value="${esc(p.callTime||'')}" placeholder="例：8:45 搬入口"></div></div>
-  <div class="row2"><div class="fld"><label for="p-work">稼働時間</label><input id="p-work" value="${esc(p.workTime||'')}" placeholder="例：9:30〜17:30"></div>
-  <div class="fld"><label for="p-bring">服装・持ち物</label><textarea id="p-bring" style="min-height:44px" placeholder="例：黒のインナー、黒パンツ">${esc(p.bring||'')}</textarea></div></div>
-  <div class="fld"><label for="p-contact">当日の現場連絡先（前確に入ります）</label><input id="p-contact" value="${esc(p.contact||'')}" placeholder="例：中村 090-xxxx-xxxx"></div>
+  <div class="row2"><div class="fld"><label for="p-venue">勤務場所（会場）</label><input id="p-venue" value="${esc(p.venue||'')}" placeholder="例：東京 展示会場 西ホール"></div>
+  <div class="fld"><label for="p-call">集合時間</label><input id="p-call" value="${esc(p.callTime||'')}" placeholder="例：13:45"></div></div>
+  <div class="fld"><label for="p-cplace">集合場所（地図のURLも可）</label><input id="p-cplace" value="${esc(p.callPlace||'')}" placeholder="例：ボード保管前 https://maps.app.goo.gl/…"></div>
+  <div class="row2"><div class="fld"><label for="p-work">勤務時間</label><input id="p-work" value="${esc(p.workTime||'')}" placeholder="例：9:30〜17:30"></div>
+  <div class="fld"><label for="p-bring">服装</label><textarea id="p-bring" style="min-height:44px" placeholder="例：黒のインナー、黒パンツ">${esc(p.bring||'')}</textarea></div></div>
+  <div class="fld"><label for="p-contact">集合担当・当日の連絡先（前確に入ります）</label><input id="p-contact" value="${esc(p.contact||'')}" placeholder="例：中村 090-xxxx-xxxx"></div>
   <details class="more" ${p.access||p.notes||p.timeNote||p.venueNote||p.dateText?'open':''}><summary>募集文に使う詳細（アクセス・身だしなみなど）</summary>
     <div class="row2"><div class="fld"><label for="p-datetext">日程の書き方</label><input id="p-datetext" value="${esc(p.dateText||'')}" placeholder="空欄なら本番日から自動"></div>
     <div class="fld"><label for="p-venuenote">会場の補足</label><input id="p-venuenote" value="${esc(p.venueNote||'')}" placeholder="例：※ホール確認中"></div></div>
@@ -1833,7 +1876,7 @@ function openProj(pid){ const p=pid?P(pid):{id:'',name:'',alias:[],showDate:iso(
   $('p-cancel').onclick=closeSheet;
   if(pid) $('p-del').onclick=()=>{ snap(); S.projects=S.projects.filter(x=>x.id!==pid); S.tasks.forEach(k=>{ if(k.projectId===pid) k.projectId=null; }); save(); closeSheet(); render(); toast('案件を削除しました',true); };
   $('p-save').onclick=()=>{ const name=$('p-name').value.trim(); if(!name){ $('p-name').focus(); return; } snap();
-    const data={name,dateText:$('p-datetext').value.trim(),venueNote:$('p-venuenote').value.trim(),timeNote:$('p-timenote').value.trim(),access:$('p-access').value.trim(),notes:$('p-notes').value.trim(),venue:$('p-venue').value.trim(),callTime:$('p-call').value.trim(),contact:$('p-contact').value.trim(),workTime:$('p-work').value.trim(),bring:$('p-bring').value.trim(),client:$('p-client').value.trim(),alias:$('p-alias').value.split(/[、,，\s]+/).map(s=>s.trim()).filter(Boolean),showDate:$('p-date').value||iso(today()),
+    const data={name,dateText:$('p-datetext').value.trim(),venueNote:$('p-venuenote').value.trim(),timeNote:$('p-timenote').value.trim(),access:$('p-access').value.trim(),notes:$('p-notes').value.trim(),venue:$('p-venue').value.trim(),callTime:$('p-call').value.trim(),callPlace:$('p-cplace').value.trim(),contact:$('p-contact').value.trim(),workTime:$('p-work').value.trim(),bring:$('p-bring').value.trim(),client:$('p-client').value.trim(),alias:$('p-alias').value.split(/[、,，\s]+/).map(s=>s.trim()).filter(Boolean),showDate:$('p-date').value||iso(today()),
       modules:[...$('p-mod').children].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.m),
       haiType:([...$('p-hai').children].find(b=>b.getAttribute('aria-pressed')==='true')||{dataset:{h:'枠受け'}}).dataset.h};
     let msg='案件を保存しました';
@@ -1874,8 +1917,10 @@ function openSlot(pid,sid){ const p=P(pid); if(!p) return; p.slots=p.slots||[];
   <div class="fld"><label for="s-need">必要人数</label><input id="s-need" type="number" inputmode="numeric" min="0" value="${s.need}"></div>
   <div class="fld"><label for="s-days">稼働日数</label><input id="s-days" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(s.days||1)}"></div>
   </div>
-  <div class="row2"><div class="fld"><label for="s-sell">請け値(日給)</label><input id="s-sell" type="number" inputmode="numeric" min="0" step="1000" value="${esc(s.sell||'')}" placeholder="元請けからの金額"></div>
-  <div class="fld"><label for="s-price">支払単価(日給)</label><input id="s-price" type="number" inputmode="numeric" min="0" step="1000" value="${esc(s.price||'')}" placeholder="手配先に出す金額"></div></div>
+  <div class="row2"><div class="fld" style="flex:0 0 auto"><span class="lb">単位</span><div class="seg" id="s-unit"><button type="button" data-u="日給" aria-pressed="${s.unit!=='時給'}">日給</button><button type="button" data-u="時給" aria-pressed="${s.unit==='時給'}">時給</button></div></div>
+  <div class="fld" id="s-hwrap" ${s.unit==='時給'?'':'hidden'} style="flex:0 0 110px"><label for="s-hours">1日の時間</label><input id="s-hours" type="number" inputmode="decimal" step="0.5" min="0" value="${esc(s.hours||8)}"></div></div>
+  <div class="row2"><div class="fld"><label for="s-sell">請け値（1人あたり）</label><input id="s-sell" type="number" inputmode="numeric" min="0" step="1000" value="${esc(s.sell||'')}" placeholder="元請けからの金額"></div>
+  <div class="fld"><label for="s-price">支払単価（1人あたり）</label><input id="s-price" type="number" inputmode="numeric" min="0" step="1000" value="${esc(s.price||'')}" placeholder="手配先に出す金額"></div></div>
   <div class="fld" style="margin-top:-6px"><div class="seg" id="s-diff">${DIFFS.map(d=>`<button type="button" data-d="${d}">請けから−${d.toLocaleString('ja-JP')}</button>`).join('')}</div><div class="hint" id="s-money" style="margin-top:6px"></div></div>
   <div class="row2"><div class="fld"><label for="s-vendor">手配先</label><input id="s-vendor" value="${esc(s.vendor)}" list="vlist" placeholder="例：Socio"><datalist id="vlist">${vendors.map(v=>`<option value="${esc(v)}">`).join('')}</datalist></div>
   <div class="fld"><span class="lb">受け方</span><div class="seg" id="s-type">${['枠受け','人出し'].map(t=>`<button type="button" data-t="${t}" aria-pressed="${s.type===t}">${t}</button>`).join('')}</div></div></div>
@@ -1885,7 +1930,8 @@ function openSlot(pid,sid){ const p=P(pid); if(!p) return; p.slots=p.slots||[];
   <div class="fld"><label for="s-paste">手配先からの返信を貼り付けて、まとめて追加</label><textarea id="s-paste" placeholder="例：&#10;田中 陽太（たなか ようた）男 24&#10;佐藤 美咲（さとう みさき）女 22"></textarea>
     <button type="button" class="btn sm" id="s-import" style="margin-top:8px">名前を取り込む</button></div>
   <div class="acts">${sid?'<button class="btn danger" id="s-del">削除</button>':'<span></span>'}<div style="display:flex;gap:8px">${sid&&s.type==='枠受け'?'<button class="btn" id="s-remind">催促文</button>':''}<button class="btn primary" id="s-save">保存</button></div></div>`);
-  const box=$('s-people'); let type=s.type;
+  const box=$('s-people'); let type=s.type; let unit=s.unit==='時給'?'時給':'日給';
+  $('s-unit').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; unit=b.dataset.u; [...$('s-unit').children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); $('s-hwrap').hidden=unit!=='時給'; });
   const count=()=>{ const n=[...box.querySelectorAll('input[data-k="name"]')].filter(i=>i.value.trim()).length; const nd=+$('s-need').value||0; $('s-count').textContent=`${n}/${nd}名`+(n>nd?`（${n-nd}名多い。補欠なら問題なし）`:(n<nd?`（残り${nd-n}名）`:'（全員そろいました）')); };
   count(); box.addEventListener('input',count); $('s-need').addEventListener('input',count);
   const money=()=>{ const sell=+$('s-sell').value||0, pay=+$('s-price').value||0, n=+$('s-need').value||0, fl=floorFor($('s-role').value);
@@ -1899,11 +1945,12 @@ function openSlot(pid,sid){ const p=P(pid); if(!p) return; p.slots=p.slots||[];
   $('s-type').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; type=b.dataset.t; [...$('s-type').children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); $('s-cwrap').hidden=type==='人出し'; });
   const read=()=>[...box.querySelectorAll('.prow')].map(r=>{ const o={}; r.querySelectorAll('[data-k]').forEach(el=>o[el.dataset.k]=el.value.trim()); return o; }).filter(x=>x.name||x.kana||x.phone);
   $('s-save').onclick=()=>{ const role=$('s-role').value.trim(); if(!role){ $('s-role').focus(); return; } snap();
-    const data={role,days:Math.max(0,parseFloat($('s-days').value)||1),sell:$('s-sell').value?String(Math.max(0,parseInt($('s-sell').value,10)||0)):'',price:$('s-price').value?String(Math.max(0,parseInt($('s-price').value,10)||0)):'',need:Math.max(0,parseInt($('s-need').value,10)||0),vendor:$('s-vendor').value.trim(),type,committed:type==='枠受け'?$('s-commit').checked:false,people:read()};
+    const data={role,unit,hours:unit==='時給'?Math.max(0,parseFloat($('s-hours').value)||8):'',days:Math.max(0,parseFloat($('s-days').value)||1),sell:$('s-sell').value?String(Math.max(0,parseInt($('s-sell').value,10)||0)):'',price:$('s-price').value?String(Math.max(0,parseInt($('s-price').value,10)||0)):'',need:Math.max(0,parseInt($('s-need').value,10)||0),vendor:$('s-vendor').value.trim(),type,committed:type==='枠受け'?$('s-commit').checked:false,people:read()};
     let msg='保存しました';
     if(sid) Object.assign(s,data); else { p.slots.push(Object.assign({id:uid()},data));
       if(type==='枠受け' && !S.tasks.some(k=>k.projectId===pid&&/ネーム提出/.test(k.title))){ let due=iso(add(fromIso(p.showDate),-3)), tag=null; if(due<iso(today())){ due=iso(today()); tag='圧縮'; }
         S.tasks.push(mkTask({title:'ネーム提出（元請けへ）',projectId:pid,due,status:'todo',tag,source:'テンプレ'})); msg='保存しました。ネーム提出のタスクも作りました'; } }
+    if(!data.sell||(!data.price&&!/自社|Luo/.test(data.vendor))) msg+='。請け値・支払単価が空なので、お金にはまだ入りません';
     save(); closeSheet(); render(); const f=filledN(sid?s:p.slots[p.slots.length-1]); toast(msg+(data.type==='枠受け'&&data.need?`（${Math.min(f,data.need)}/${data.need}名）`:''),true); };
   if(sid){ $('s-del').onclick=()=>{ snap(); p.slots=p.slots.filter(x=>x.id!==sid); save(); closeSheet(); render(); toast('削除しました',true); };
     if($('s-remind')) $('s-remind').onclick=()=>openCopy(`${s.role}の催促文（${s.vendor||'手配先'}あて）`,remindText(p,s),'LINEやメールにそのまま貼れます。'); }
@@ -2183,14 +2230,17 @@ const isSelf=v=>/自社|Luo/i.test(v||'');
 const tax=n=>Math.floor(n*0.1);
 function clientOf(p){ return (S.clients||[]).find(c=>c.id===p.clientId)||null; }
 function cname(c){ return c?c.name:'元請け未設定'; }
+function billKeyOf(p){ const c=clientOf(p); return (c?c.id:'_none')+'|'+billMonthOf(p,c)+(p.payDue?'|'+p.payDue:''); }
 function billMonthOf(p,c){ const d=fromIso(p.showDate); const cd=(c&&+c.closeDay)||31; let y=d.getFullYear(), m=d.getMonth()+1;
   if(cd<28 && d.getDate()>cd){ m++; if(m>12){ m=1; y++; } } return y+'-'+String(m).padStart(2,'0'); }
 function dueOf(bm,c){ const [y,m]=bm.split('-').map(Number); let mm=m+((c&&c.payMonths!=null)?+c.payMonths:1), yy=y; while(mm>12){ mm-=12; yy++; }
   const pd=(c&&+c.payDay)||31; return iso(new Date(yy,mm-1,Math.min(pd,lastDay(yy,mm)))); }
+function moneyGaps(p){ const g=[]; (p.slots||[]).forEach(s=>{ if(isSelfSlot(s)){ if(!+s.sell) g.push(`${s.role}（自分の稼働）の請け値`); return; } if(!+s.sell) g.push(`${s.role}の請け値`); if(!+s.price) g.push(`${s.role}の支払単価`); });
+  if(((p.slots||[]).length||(p.extras||[]).length)&&!clientOf(p)) g.push('元請け'); return g; }
 function projMoney(p){ const lines=[];
-  (p.slots||[]).forEach(s=>{ const n=+s.need||0, dys=+s.days||1;
-    if(+s.sell) lines.push({kind:'sale',label:s.role,unit:+s.sell,qty:n,days:dys,amt:Math.round(+s.sell*n*dys)});
-    if(+s.price && !isSelf(s.vendor)) lines.push({kind:'cost',vendor:s.vendor||'手配先未定',label:s.role,unit:+s.price,qty:n,days:dys,amt:Math.round(+s.price*n*dys)}); });
+  (p.slots||[]).forEach(s=>{ const n=+s.need||0, dys=+s.days||1, hr=s.unit==='時給'?(+s.hours||8):1, lb=s.role+(s.unit==='時給'?`（時給×${fmtN(hr)}時間）`:'');
+    if(+s.sell) lines.push({kind:'sale',label:lb,unit:+s.sell*hr,qty:n,days:dys,amt:Math.round(+s.sell*hr*n*dys)});
+    if(+s.price && !isSelf(s.vendor)) lines.push({kind:'cost',vendor:s.vendor||'手配先未定',label:lb,unit:+s.price*hr,qty:n,days:dys,amt:Math.round(+s.price*hr*n*dys)}); });
   (p.extras||[]).forEach(x=>{ if(+x.sell) lines.push({kind:'sale',label:x.label,amt:+x.sell}); if(+x.cost && !isSelf(x.vendor)) lines.push({kind:'cost',vendor:x.vendor||'手配先未定',label:x.label,amt:+x.cost}); });
   const base=lines.filter(l=>l.kind==='sale').reduce((a,l)=>a+l.amt,0); const fee=Math.round(base*((+p.feeRate||0)/100));
   if(fee) lines.push({kind:'sale',label:`管理費（${p.feeRate}%）`,amt:fee});
@@ -2198,9 +2248,9 @@ function projMoney(p){ const lines=[];
   return {lines,sale,cost,gross:sale-cost}; }
 function billsAll(){ const out={};
   S.projects.filter(p=>p.kind!=='long').forEach(p=>{ const c=clientOf(p), m=projMoney(p); if(!m.sale&&!m.cost) return;
-    const bm=billMonthOf(p,c), key=(c?c.id:'_none')+'|'+bm; const b=out[key]=out[key]||{key,client:c,bm,projects:[],sale:0,cost:0};
+    const bm=billMonthOf(p,c), key=billKeyOf(p); const b=out[key]=out[key]||{key,client:c,bm,projects:[],sale:0,cost:0,fixDue:p.payDue||''};
     b.projects.push({p,m}); b.sale+=m.sale; b.cost+=m.cost; });
-  const arr=Object.values(out).map(b=>{ const st=(S.bills||{})[b.key]||{}; b.autoDue=dueOf(b.bm,b.client); b.due=(st.dates&&st.dates.due)||b.autoDue; b.status=st.status||'未請求';
+  const arr=Object.values(out).map(b=>{ const st=(S.bills||{})[b.key]||{}; b.autoDue=b.fixDue||dueOf(b.bm,b.client); b.due=(st.dates&&st.dates.due)||b.autoDue; b.status=st.status||'未請求';
     if(st.snap){ b.rsale=st.snap.sale; b.changed=st.snap.sale!==b.sale; } else b.rsale=b.sale; return b; });
   Object.entries(S.bills||{}).forEach(([k,st])=>{ if(st.snap && !out[k]) arr.push({key:k,client:{name:st.snap.client},bm:st.snap.bm,projects:[],sale:st.snap.sale,cost:st.snap.cost||0,rsale:st.snap.sale,due:st.snap.due,status:st.status||'請求済',orphan:true}); });
   return arr; }
@@ -2289,11 +2339,12 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   else { inB=bills.filter(b=>b.due.slice(0,7)===moneyMonth); outP=pays.filter(v=>v.due.slice(0,7)===moneyMonth); sale=inB.reduce((a,b)=>a+b.rsale+tax(b.rsale),0);
     const outX=expItems([moneyMonth]).reduce((a,i)=>a+(i.x.taxIncl?amtFor(i.x,i.bm):i.gross),0); cost=outP.reduce((a,v)=>a+v.ramt+tax(v.ramt),0)+outX; taxIn=true; }
   const g=sale-cost, exp=expensesFor(moneyMonth);
-  const billRow=b=>{ const late=b.status!=='入金済'&&n>b.due; return `<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分　${b.orphan?'記録のみ':b.projects.length+'案件'}　入金予定 ${md(fromIso(b.due))}</span></div>
+  const billRow=b=>{ const late=b.status!=='入金済'&&n>b.due; return `<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分${b.fixDue?'（個別の入金日）':''}　${b.orphan?'記録のみ':b.projects.length+'案件'}　入金予定 ${md(fromIso(b.due))}</span></div>
     <div class="mr"><em>${yen(b.rsale+(taxIn?tax(b.rsale):0))}</em><i class="chip ${BST[b.status]} ${late?'late':''}">${late?'入金遅れ':b.status}</i>${((S.bills||{})[b.key]||{}).files&&(S.bills[b.key].files||[]).length?'<i class="chip">請求書あり</i>':''}${b.changed?'<i class="chip late">請求後に変更あり</i>':''}</div></li>`; };
   const payRow=v=>{ const d=dd(fromIso(v.due),today()); const hot=v.status!=='支払済'&&d<=3; return `<li class="mrow" data-act="moneyOpen" data-kind="pay" data-key="${esc(v.key)}"><div class="ml"><b>${esc(v.vendor)}</b><span>${ymLabel(v.bm)}分　支払 ${md(fromIso(v.due))}（${v.rule==='60'?'60日払い':'入金に合わせる'}）</span></div>
     <div class="mr"><em>${yen(v.ramt+(taxIn?tax(v.ramt):0))}</em><i class="chip ${PST[v.status]} ${hot?'hot':''}">${v.status}</i>${((S.pays||{})[v.key]||{}).files&&(S.pays[v.key].files||[]).length?'<i class="chip">請求書あり</i>':''}</div></li>`; };
-  el.innerHTML=segP+nav+`
+  const gapPs=S.projects.filter(p=>p.kind!=='long'&&(p.slots||[]).length&&moneyGaps(p).length&&billMonthOf(p,clientOf(p))===moneyMonth);
+  el.innerHTML=segP+nav+(gapPs.length?`<div class="sec"><h2 style="color:var(--purple)">お金に入っていない案件 <small>${gapPs.length}件</small></h2><ul class="mlist">${gapPs.map(p=>`<li class="mrow" data-act="projMoney" data-pid="${p.id}"><div class="ml"><b>${esc(p.name)}</b><span>${esc(moneyGaps(p).join('・'))}が未入力</span></div><div class="mr"><em>›</em></div></li>`).join('')}</ul></div>`:'')+`
   <div class="seg mmode"><button type="button" data-act="mMode" data-m="work" aria-pressed="${moneyMode==='work'}">粗利<small>稼働した月</small></button><button type="button" data-act="mMode" data-m="cash" aria-pressed="${moneyMode==='cash'}">資金繰り<small>お金が動く月</small></button></div>
   <div class="msum"><div><span>${moneyMode==='work'?'売上':'入ってくる'}</span><b>${yen(sale)}</b></div><div><span>${moneyMode==='work'?'支払':'出ていく'}</span><b>${yen(cost)}</b></div><div class="g"><span>${moneyMode==='work'?'粗利':'差し引き'}</span><b>${yen(g)}</b>${moneyMode==='work'?`<small>${pct1(g,sale)}%</small>`:''}</div></div>
   <button class="mexp" data-act="expList"><span>経費</span><b>${yen(exp)}</b><small>税抜・${expItems([moneyMonth]).length}件</small>${moneyMode==='work'?`<span class="sep">利益（概算）</span><b class="pf">${yen(g-exp)}</b>`:''}<em>内訳を見る ›</em></button>
@@ -2453,7 +2504,7 @@ function openBill(key){ const b=billsAll().find(x=>x.key===key); if(!b) return; 
   ${dueOverrideUI('b-due',((S.bills||{})[key]||{}).dates&&S.bills[key].dates.due,b.autoDue||b.due)}
   <div class="fld"><span class="lb">状況</span><div class="seg" id="bs">${['未請求','請求済','入金済'].map(x=>`<button type="button" data-v="${x}" aria-pressed="${b.status===x}">${x==='請求済'?'請求書を送った':x==='入金済'?'入金を確認した':'まだ請求していない'}</button>`).join('')}</div></div>
   <div class="fld"><span class="lb">発行した請求書</span>${filesHtml((S.bills[key]||{}).files,'発行')}${attachUI('b-file')}</div>
-  <div class="fld"><span class="lb">明細</span><div class="pvlist">${b.projects.map(({p,m})=>`<div><b>${esc(short(p))}</b><span>${m.lines.filter(l=>l.kind==='sale').map(l=>`${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}`).join('\n')}</span></div>`).join('')}</div></div>
+  <div class="fld"><span class="lb">明細（案件を押すと、その案件だけ入金日を変えられます）</span><div class="pvlist">${b.projects.map(({p,m})=>`<div data-act="projMoney" data-pid="${p.id}" style="cursor:pointer"><b>${esc(short(p))}${p.payDue?'<br><small style="color:var(--blue)">個別 '+md(fromIso(p.payDue))+'</small>':''}</b><span>${m.lines.filter(l=>l.kind==='sale').map(l=>`${esc(l.label)}${l.unit?`　${yen(l.unit)}×${l.qty}名×${l.days}日`:''}　${yen(l.amt)}`).join('\n')}</span></div>`).join('')}</div></div>
   <div class="acts" style="flex-wrap:wrap"><button class="btn" id="b-close">閉じる</button><div style="display:flex;gap:8px"><button class="btn" id="b-tsv">表でコピー</button><button class="btn primary" id="b-txt">明細をコピー</button></div></div>
   <p class="hint">マネーフォワードで請求書を作るときに、明細を貼り付けて使えます。「表でコピー」は品目・単価・数量・金額の列になっています。</p>`);
   $('bs').addEventListener('click',e=>{ const x=e.target.closest('button'); if(!x) return; snap(); const prevSt=S.bills[key]||{}; S.bills[key]=Object.assign(prevSt, {status:x.dataset.v, at:Date.now()}); S.bills[key].dates=S.bills[key].dates||{}; if(x.dataset.v!=='未請求') S.bills[key].dates[x.dataset.v]=S.bills[key].dates[x.dataset.v]||iso(today()); else S.bills[key].dates={}; if(x.dataset.v==='未請求') delete S.bills[key].snap; else if(!prevSt.snap) S.bills[key].snap={sale:b.sale,cost:b.cost,client:cname(b.client),bm:b.bm,due:b.due}; save(); closeSheet(); render(); toast(`「${x.textContent}」にしました`,true); });
@@ -2503,6 +2554,89 @@ function openVendors(){ S.vendors=S.vendors||[]; const names=[...new Set([...S.v
   $('sheet').querySelectorAll('[data-vn]').forEach(inp=>inp.addEventListener('change',()=>{ const nm=inp.dataset.vn; let vm=S.vendors.find(v=>v.name===nm); if(!vm){ vm={name:nm}; S.vendors.push(vm); } vm[inp.dataset.k]=inp.value.trim(); save(); }));
   $('vd-ok').onclick=closeSheet; }
 function projExp(pid){ return (S.expenses||[]).filter(x=>x.projectId===pid&&!x.recurring); }
+/* =========================================================
+   手配とお金（1画面で、表のようにその場で直す）
+   ・職種ごとの行に「手配先・人数・日数・請け・払い」をその場で入力 → 粗利と合計がすぐ変わる
+   ・保存ボタンなし（入力したら自動で保存）
+   ・自分の稼働、追加（残業・交通費など）、元請け・管理費・入金日も同じ画面
+   ・名前（ネーム）の入力や受け方の細かい設定は、行の「名前」から今までの画面へ
+   ========================================================= */
+let hmSaveT=null;
+function hmSave(){ clearTimeout(hmSaveT); hmSaveT=setTimeout(()=>{ save(); render(); },500); }
+function openHaiMoney(pid,focus){ const p=P(pid); if(!p) return; p.slots=p.slots||[]; p.extras=p.extras||[];
+  const vendors=vendorNamesAll();
+  const hai=p.slots.filter(x=>!isSelfSlot(x)), me=p.slots.filter(isSelfSlot);
+  const num=(f,v,ph,cls)=>`<input class="hmn ${cls||''}" data-f="${f}" type="number" inputmode="decimal" value="${esc(v===undefined||v===null?'':v)}" placeholder="${ph||''}">`;
+  const rowHai=s=>{ const f=filledN(s), n=+s.need||0;
+    return `<div class="hmrow" data-kind="slot" data-id="${s.id}">
+    <input class="hmt role" data-f="role" value="${esc(s.role)}" placeholder="職種" aria-label="職種">
+    <input class="hmt vend" data-f="vendor" value="${esc(s.vendor||'')}" placeholder="手配先" list="hmv" aria-label="手配先">
+    <label class="hmc a-need">人数${num('need',s.need,'1')}</label><label class="hmc a-days">日数${num('days',s.days||1,'1')}</label>
+    <div class="hmu seg sm"><button type="button" data-u="日給" aria-pressed="${s.unit!=='時給'}">日給</button><button type="button" data-u="時給" aria-pressed="${s.unit==='時給'}">時給</button></div>
+    <label class="hmc hrs" ${s.unit==='時給'?'':'hidden'}>1日の時間${num('hours',s.hours||8,'8')}</label>
+    <label class="hmc money a-sell">請け（1人）${num('sell',s.sell,'0',!+s.sell?'miss':'')}</label><label class="hmc money a-price">払い（1人）${num('price',s.price,'0',!+s.price?'miss':'')}</label>
+    <div class="hmg" data-g>—</div>
+    <button type="button" class="hmp ${f>=n&&n?'ok':''}" data-act="slot" data-pid="${p.id}" data-sid="${s.id}">名前 ${f}/${n}</button>
+    <button type="button" class="hmx" data-rm aria-label="この行を消す">×</button></div>`; };
+  const rowMe=s=>`<div class="hmrow me" data-kind="slot" data-id="${s.id}">
+    <input class="hmt role" data-f="role" value="${esc(s.role)}" placeholder="役割" aria-label="役割">
+    <input class="hmt vend" data-f="who" value="${esc((s.people||[]).map(x=>x.name).join('、'))}" placeholder="誰が（、で区切る）" aria-label="誰が">
+    <label class="hmc a-days">日数${num('days',s.days||1,'1')}</label>
+    <label class="hmc money a-sell">請け（1人1日）${num('sell',s.sell,'0',!+s.sell?'miss':'')}</label>
+    <div class="hmg" data-g>—</div><button type="button" class="hmx" data-rm aria-label="この行を消す">×</button></div>`;
+  const rowEx=x=>`<div class="hmrow ex" data-kind="extra" data-id="${x.id}">
+    <input class="hmt role" data-f="label" value="${esc(x.label||'')}" placeholder="項目（残業、交通費、増員など）" aria-label="項目">
+    <input class="hmt vend" data-f="vendor" value="${esc(x.vendor||'')}" placeholder="支払先" list="hmv" aria-label="支払先">
+    <label class="hmc money a-sell">請求${num('sell',x.sell,'0')}</label><label class="hmc money a-price">支払${num('cost',x.cost,'0')}</label>
+    <div class="hmg" data-g>—</div><button type="button" class="hmx" data-rm aria-label="この行を消す">×</button></div>`;
+  const c=clientOf(p);
+  openSheet(`<h3>手配とお金　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(short(p))}</span></h3>
+  <div class="hmsum" id="hmSum"></div>
+  <div class="hmtop">
+    <label class="hmc wide">元請け<select id="hm-client"><option value="">未設定</option>${(S.clients||[]).map(x=>`<option value="${x.id}" ${x.id===p.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+    <label class="hmc">管理費%<input id="hm-fee" class="hmn" type="number" inputmode="decimal" value="${esc(p.feeRate||'')}" placeholder="0"></label>
+    <label class="hmc wide">入金予定日（この案件だけ変えるとき）<input id="hm-due" type="date" value="${esc(p.payDue||'')}"></label>
+  </div>
+  <div class="hmsec"><div class="hmh">スタッフの手配<small>請け・払いは1人あたり（時給なら1時間あたり）</small></div><div id="hmHai">${hai.map(rowHai).join('')}</div>
+    <button type="button" class="addslot" id="hm-addHai">＋ 職種を追加</button></div>
+  <div class="hmsec"><div class="hmh">自分の稼働<small>支払いは発生しません</small></div><div id="hmMe">${me.map(rowMe).join('')}</div>
+    <button type="button" class="addslot" id="hm-addMe">＋ 自分の稼働を追加</button></div>
+  <div class="hmsec"><div class="hmh">追加（残業・交通費・増員など）<small>金額は合計で</small></div><div id="hmEx">${p.extras.map(rowEx).join('')}</div>
+    <button type="button" class="addslot" id="hm-addEx">＋ 追加を入れる</button></div>
+  <datalist id="hmv">${vendors.map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
+  <div class="acts"><button type="button" class="btn sm" data-act="moneyFor2" data-pid="${p.id}">請求・入金を見る</button><button class="btn primary" id="hm-close">閉じる</button></div>
+  <p class="hint">入力するとその場で自動保存されます。空の「請け」「払い」は紫の枠で知らせます。名前（ネーム）を入れるときは、各行の「名前」を押してください。</p>`);
+  const find=r=>r.dataset.kind==='extra'?p.extras.find(x=>x.id===r.dataset.id):p.slots.find(x=>x.id===r.dataset.id);
+  const paint=()=>{ const m=projMoney(p), rate=m.sale?Math.round(m.gross/m.sale*1000)/10:0;
+    $('hmSum').innerHTML=`<div><span>売上</span><b>${yen(m.sale)}</b></div><div><span>支払</span><b>${yen(m.cost)}</b></div><div class="g"><span>粗利</span><b>${yen(m.gross)}</b><small>${rate}%</small></div>`;
+    $('sheet').querySelectorAll('.hmrow').forEach(r=>{ const o=find(r); if(!o) return; const g=r.querySelector('[data-g]');
+      if(r.dataset.kind==='extra'){ const v=(+o.sell||0)-(+o.cost||0); g.textContent=(o.sell||o.cost)?'粗利 '+yen(v):'—'; return; }
+      const hr=o.unit==='時給'?(+o.hours||8):1, n=+o.need||1, d=+o.days||1;
+      if(isSelfSlot(o)){ g.textContent=+o.sell?'売上 '+yen(+o.sell*n*d):'—'; return; }
+      g.textContent=(+o.sell&&+o.price)?`粗利 ${yen((+o.sell-+o.price)*hr*(+o.need||0)*d)}`:(+o.sell||+o.price?'片方が空です':'—'); g.classList.toggle('neg',+o.sell&&+o.price&&+o.sell<+o.price); }); };
+  paint();
+  const box=$('sheet');
+  box.addEventListener('input',e=>{ const el=e.target, r=el.closest('.hmrow'); if(!r||!el.dataset.f) return; const o=find(r); if(!o) return; const f=el.dataset.f;
+    if(f==='who'){ o.people=el.value.split(/[、,，]+/).map(x=>x.trim()).filter(Boolean).map(n=>({name:n})); o.need=Math.max(1,o.people.length); }
+    else if(['need','days','hours'].includes(f)) o[f]=el.value===''?'':+el.value;
+    else o[f]=el.value;
+    if(f==='sell'||f==='price') el.classList.toggle('miss',!+el.value&&r.dataset.kind==='slot');
+    paint(); hmSave(); });
+  box.addEventListener('click',e=>{ const u=e.target.closest('.hmu button'); if(u){ const r=u.closest('.hmrow'), o=find(r); o.unit=u.dataset.u; if(o.unit==='時給'&&!o.hours) o.hours=8; [...u.parentElement.children].forEach(x=>x.setAttribute('aria-pressed',x===u?'true':'false')); r.querySelector('.hrs').hidden=o.unit!=='時給'; paint(); hmSave(); return; }
+    const rm=e.target.closest('[data-rm]'); if(rm){ const r=rm.closest('.hmrow'); const o=find(r); const label=o.role||o.label||'この行'; if((o.people||[]).length&&!isSelfSlot(o)&&!confirm(`${label}には名前が${o.people.length}人入っています。消しますか？`)) return; snap();
+      if(r.dataset.kind==='extra') p.extras=p.extras.filter(x=>x!==o); else p.slots=p.slots.filter(x=>x!==o); r.remove(); paint(); hmSave(); toast('消しました',true); } });
+  $('hm-client').onchange=e=>{ p.clientId=e.target.value; paint(); hmSave(); };
+  $('hm-fee').oninput=e=>{ p.feeRate=e.target.value===''?0:+e.target.value; paint(); hmSave(); };
+  $('hm-due').addEventListener('change',e=>{ p.payDue=e.target.value||''; hmSave(); });
+  const addRow=(kind)=>{ snap(); if(kind==='hai'){ const s={id:uid(),role:'',need:1,days:1,vendor:'',type:p.haiType||'枠受け',committed:false,unit:'日給',sell:'',price:'',people:[]}; p.slots.push(s); if(!(p.modules||[]).includes('手配')) p.modules=[...(p.modules||[]),'手配']; $('hmHai').insertAdjacentHTML('beforeend',rowHai(s)); $('hmHai').lastElementChild.querySelector('input').focus(); }
+    if(kind==='me'){ const s={id:uid(),role:'ディレクター',need:1,days:1,vendor:'自社',self:true,type:'人出し',committed:true,sell:'',price:'',people:[{name:company().person||'中村'}]}; p.slots.push(s); $('hmMe').insertAdjacentHTML('beforeend',rowMe(s)); $('hmMe').lastElementChild.querySelector('[data-f="sell"]').focus(); }
+    if(kind==='ex'){ const x={id:uid(),label:'',vendor:'',sell:'',cost:''}; p.extras.push(x); $('hmEx').insertAdjacentHTML('beforeend',rowEx(x)); $('hmEx').lastElementChild.querySelector('input').focus(); }
+    paint(); hmSave(); };
+  $('hm-addHai').onclick=()=>addRow('hai'); $('hm-addMe').onclick=()=>addRow('me'); $('hm-addEx').onclick=()=>addRow('ex');
+  $('hm-close').onclick=()=>{ p.slots=p.slots.filter(x=>x.role||x.sell||x.price||(x.people||[]).length); p.extras=p.extras.filter(x=>x.label||x.sell||x.cost); clearTimeout(hmSaveT); save(); closeSheet(); render(); };
+  if(focus){ const el=box.querySelector(focus); if(el) setTimeout(()=>el.focus(),50); }
+}
+
 function openProjMoney(pid){ const p=P(pid); if(!p) return; p.extras=p.extras||[]; const m=projMoney(p); const pe=projExp(pid), peSum=pe.reduce((a,x)=>a+(+x.amount||0),0);
   const ex=x=>`<div class="payrow" data-xid="${x.id}"><div class="row2"><div class="fld" style="flex:2"><label>項目</label><input data-k="label" value="${esc(x.label)}" placeholder="例：残業代、交通費、増員"></div>
     <div class="fld"><label>支払先</label><input data-k="vendor" value="${esc(x.vendor||'')}" list="vl2" placeholder="手配先"></div></div>
@@ -2512,16 +2646,19 @@ function openProjMoney(pid){ const p=P(pid); if(!p) return; p.extras=p.extras||[
   <div class="msum sm"><div><span>売上</span><b>${yen(m.sale)}</b></div><div><span>支払</span><b>${yen(m.cost)}</b></div><div class="g"><span>粗利</span><b>${yen(m.gross)}</b><small>${m.sale?Math.round(m.gross/m.sale*1000)/10:0}%</small></div></div>
   <div class="row2"><div class="fld"><label for="pm-client">元請け</label><select id="pm-client"><option value="">未設定</option>${(S.clients||[]).map(c=>`<option value="${c.id}" ${c.id===p.clientId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
   <div class="fld"><label for="pm-fee">管理費（%）</label><input id="pm-fee" type="number" inputmode="numeric" value="${esc(p.feeRate||'')}" placeholder="0"></div></div>
-  <div class="fld"><span class="lb">枠ごとの金額（手配枠の画面で変更できます）</span><div class="pvlist">${(p.slots||[]).map(s=>`<div><b>${esc(s.role)}</b><span>請け ${s.sell?yen(+s.sell):'—'}／支払 ${s.price?yen(+s.price):'—'}　×${s.need}名×${s.days||1}日${isSelf(s.vendor)?'（自社）':''}</span></div>`).join('')||'<div><span>手配枠はまだありません</span></div>'}</div></div>
+  <div class="fld"><span class="lb">枠ごとの金額（押すと、その枠の請け値・支払単価を直せます）</span><div class="pvlist">${(p.slots||[]).map(s=>`<div data-act="${isSelfSlot(s)?'selfEdit':'slot'}" data-pid="${p.id}" data-sid="${s.id}" style="cursor:pointer"><b>${esc(s.role)}</b><span>請け ${s.sell?yen(+s.sell):'—'}／支払 ${s.price?yen(+s.price):'—'}　×${s.need}名×${s.days||1}日${isSelf(s.vendor)?'（自社）':''}</span></div>`).join('')||'<div><span>手配枠はまだありません</span></div>'}</div></div>
   ${pe.length?`<div class="fld"><span class="lb">この案件でかかった経費（${yen(peSum)}）　経費を引いた粗利 ${yen(m.gross-peSum)}</span><div class="pvlist">${pe.map(x=>`<div><b>${esc(x.date?md(fromIso(x.date)):'')}</b><span>${esc(x.label)}　${yen(+x.amount)}　${esc(x.acct||'')}</span></div>`).join('')}</div></div>`:''}
   <div class="fld"><span class="lb">追加（残業・増員・交通費など、当日決まったものも）</span><div id="pm-ex">${p.extras.map(ex).join('')}</div><datalist id="vl2">${[...new Set(S.projects.flatMap(q=>(q.slots||[]).map(s=>s.vendor)).filter(Boolean))].map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
     <button type="button" class="btn sm" id="pm-add" style="margin-top:8px">＋ 追加する</button></div>
-  ${(()=>{ const c=clientOf(p); if(!c||!m.sale) return ''; const key=c.id+'|'+billMonthOf(p,c); const b=billsAll().find(x=>x.key===key); return b?`<div class="fld"><span class="lb">入金</span><button type="button" class="btn sm" data-act="moneyOpen" data-kind="bill" data-key="${esc(key)}">${esc(cname(c))}　${mNum(b.bm)}月分の請求　入金予定 ${md(fromIso(b.due))}　›</button><p class="hint">入金予定日を変えるときは、ここから請求の画面を開いて「予定日を変える」で変えます（同じ元請けの同じ月の案件は、まとめて1つの請求です）。</p></div>`:''; })()}
+  ${(()=>{ const c=clientOf(p); if(!c||!m.sale) return ''; const normal=dueOf(billMonthOf(p,c),c);
+    return `<div class="fld"><label for="pm-due">この案件の入金予定日（空欄なら通常のサイクル：${md(fromIso(normal))}）</label><input id="pm-due" type="date" value="${esc(p.payDue||'')}">
+      <p class="hint">日付を入れると、この案件は通常の月まとめの請求から外れ、<b>同じ入金日の案件どうし</b>で別の請求になります（例：Swyveの9月分のうち、2件だけ10/15入金）。</p></div>`; })()}
+  ${(()=>{ const c=clientOf(p); if(!c||!m.sale) return ''; const key=billKeyOf(p); const b=billsAll().find(x=>x.key===key); return b?`<div class="fld"><span class="lb">入金</span><button type="button" class="btn sm" data-act="moneyOpen" data-kind="bill" data-key="${esc(key)}">${esc(cname(c))}　${mNum(b.bm)}月分の請求　入金予定 ${md(fromIso(b.due))}　›</button><p class="hint">入金予定日を変えるときは、ここから請求の画面を開いて「予定日を変える」で変えます（同じ元請けの同じ月の案件は、まとめて1つの請求です）。</p></div>`:''; })()}
   <div class="acts"><button class="btn" id="pm-close">閉じる</button><button class="btn primary" id="pm-save">保存</button></div>`);
   $('pm-add').onclick=()=>{ $('pm-ex').insertAdjacentHTML('beforeend',ex({id:uid(),label:'',vendor:'',sell:'',cost:''})); $('pm-ex').lastElementChild.querySelector('input').focus(); };
   $('pm-ex').addEventListener('click',e=>{ if(e.target.closest('[data-rm]')) e.target.closest('[data-xid]').remove(); });
   $('pm-close').onclick=closeSheet;
-  $('pm-save').onclick=()=>{ snap(); p.clientId=$('pm-client').value||''; p.feeRate=$('pm-fee').value?+$('pm-fee').value:0;
+  $('pm-save').onclick=()=>{ snap(); p.clientId=$('pm-client').value||''; p.feeRate=$('pm-fee').value?+$('pm-fee').value:0; if($('pm-due')) p.payDue=$('pm-due').value||'';
     p.extras=[...$('pm-ex').querySelectorAll('[data-xid]')].map(r=>{ const o={id:r.dataset.xid}; r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.value.trim()); return o; }).filter(x=>x.label||x.sell||x.cost);
     save(); closeSheet(); render(); toast('保存しました',true); }; }
 function openBackup(){ const data=JSON.stringify(S);
@@ -2649,14 +2786,16 @@ function unflatS(R){ const S2={projects:[],tasks:[],clients:[],vendors:[],expens
 function persistBase(){ try{ localStorage.setItem(BASE_KEY,JSON.stringify({schema:SCHEMA_,lastT})); }catch(e){} }
 function markPending(v){ try{ v?localStorage.setItem(PEND_KEY,'1'):localStorage.removeItem(PEND_KEY); }catch(e){} }
 function scheduleSync(){ if(!SERVER||!SCHEMA_) return; dirty=true; markPending(true); setSync('pend','保存待ち'); clearTimeout(syncTimer); syncTimer=setTimeout(pushSync,1200); }
+const pushHist=[];
 function pushSync(){ if(!SERVER||!SCHEMA_) return; if(syncing){ scheduleSync(); return; }
   const T=flatS(S), N=normAll(T), patch={}; let n=0;
   Object.keys(N).forEach(t=>{ const up=[], del=[]; Object.entries(N[t]).forEach(([id,j])=>{ if(!lastT[t]||lastT[t][id]!==j) up.push(T[t][id]); });
     Object.keys(lastT[t]||{}).forEach(id=>{ if(!(id in N[t])) del.push(id); }); if(up.length||del.length){ patch[t]={up,del}; n+=up.length+del.length; } });
   dirty=false; if(!n){ markPending(false); setSync('ok','保存済み'); return; }
   syncing=true; setSync('busy','保存中…');
-  api('applyPatch',{patch}).then(()=>{ syncing=false; lastT=N; persistBase(); if(dirty) scheduleSync(); else { markPending(false); setSync('ok','保存済み'); setTimeout(()=>pullSync(),1500); } })
-    .catch(err=>{ syncing=false; dirty=true; markPending(true); setSync('err',/合言葉/.test(err.message)?'合言葉が違います（設定でつなぎ直し）':'未保存（電波が戻ったら送ります）'); clearTimeout(syncTimer); syncTimer=setTimeout(pushSync,15000); }); }
+  (()=>{ const sig=JSON.stringify(patch); const now=Date.now(); pushHist.push({sig,now}); while(pushHist.length&&now-pushHist[0].now>180000) pushHist.shift();
+    if(pushHist.filter(x=>x.sig===sig).length>=4){ console.warn('同じ内容の送信がくり返されたため止めました',patch); lastT=N; persistBase(); syncing=false; dirty=false; markPending(false); setSync('ok','最新です'); return Promise.reject({loopStop:true}); } return Promise.resolve(); })().then(()=>api('applyPatch',{patch})).then(()=>{ syncing=false; lastT=N; persistBase(); if(dirty) scheduleSync(); else { markPending(false); setSync('ok','保存済み'); setTimeout(()=>pullSync(),1500); } })
+    .catch(err=>{ if(err&&err.loopStop) return; syncing=false; dirty=true; markPending(true); setSync('err',/合言葉/.test((err&&err.message)||'')?'合言葉が違います（設定でつなぎ直し）':'未保存（電波が戻ったら送ります）'); clearTimeout(syncTimer); syncTimer=setTimeout(pushSync,15000); }); }
 function pullSync(force){ if(!SERVER||syncing||dirty) return;
   api('loadAll').then(d=>{ SCHEMA_=d.schema; const S2=unflatS(d.rows); const N=normAll(flatS(S2));
       if(!force && JSON.stringify(N)===JSON.stringify(lastT)) { setSync('ok','最新です'); return; } if(dirty||syncing) return;
@@ -2730,10 +2869,13 @@ function openImport(o){ if(!o||!Array.isArray(o.projects)){ toast('Lv.OPSの取�
   <div class="pvlist"><div><b>元データ</b><span>${esc(o._source||'（不明）')}</span></div><div><b>案件</b><span>${o.projects.length}件（お金の記録 ${money}件）</span></div>
   <div><b>元請け</b><span>${(o.clients||[]).length}社</span></div><div><b>手配先</b><span>${(o.vendors||[]).length}件</span></div>
   <div><b>請求・支払の状況</b><span>${Object.keys(o.bills||{}).length}件・${Object.keys(o.pays||{}).length}件</span></div></div>
-  <label class="chk"><input type="checkbox" id="im-rep" checked><span>今入っているデータを消してから取り込む<small>案件・タスク・お金・経費を空にしてから入れます。会社情報・決算月・色などの設定は残ります。サンプルが入っているときはオンのままにしてください。</small></span></label>
+  ${S.projects.length?`<div class="chk" style="display:block;border-color:var(--teal)"><b>今のデータに足して・上書きして取り込みます</b><small style="margin-top:4px">同じ案件は取り込むファイルの内容に置き換わり、それ以外の案件・タスク・お金はそのまま残ります。</small></div>`:''}
+  <label class="chk" style="${S.projects.length?'border-color:var(--fatal)':''}"><input type="checkbox" id="im-rep" ${S.projects.length?'':'checked'}><span>今入っているデータを<b>すべて消してから</b>取り込む<small>${S.projects.length?`<b style="color:var(--fatal)">今ある案件${S.projects.length}件・タスク${S.tasks.length}件・お金の記録がすべて消えます。</b>サンプルを入れ替えるときや、全部を入れ直すときだけ使ってください。`:'空の状態から入れます。'}</small></span></label>
   <div class="acts" style="margin-top:12px"><button class="btn" id="im-no">やめる</button><button class="btn primary" id="im-go">取り込む</button></div>`);
   $('im-no').onclick=closeSheet;
-  $('im-go').onclick=()=>{ snap(); const rep=$('im-rep').checked;
+  $('im-go').onclick=()=>{ const rep=$('im-rep').checked;
+    if(rep&&S.projects.length&&prompt(`今ある案件${S.projects.length}件・タスク${S.tasks.length}件・お金の記録をすべて消して、ファイルの中身に入れ替えます。\n本当に消すときは「消す」と入力してください。`)!=='消す'){ toast('取り込みをやめました'); return; }
+    snap();
     if(rep){ const keep={}; ['settings','msgTpl','headLearn'].forEach(k=>{ if(S[k]!==undefined) keep[k]=S[k]; }); S=Object.assign({projects:[],tasks:[],clients:[],vendors:[],expenses:[],bills:{},pays:{}},keep); }
     const up=(arr,src,key)=>{ (src||[]).forEach(x=>{ const i=arr.findIndex(y=>y[key]===x[key]); if(i>=0) arr[i]=x; else arr.push(x); }); };
     S.projects=S.projects||[]; S.tasks=S.tasks||[]; S.clients=S.clients||[]; S.vendors=S.vendors||[]; S.expenses=S.expenses||[];
@@ -2762,7 +2904,7 @@ const isYearEnd=d=>(d.getMonth()===11&&d.getDate()>=29)||(d.getMonth()===0&&d.ge
 const isBizDay=d=>d.getDay()!==0&&d.getDay()!==6&&!isHoliday(d)&&!isYearEnd(d);
 function zenDate(p){ let d=add(fromIso(p.showDate),-1); for(let i=0;i<20&&!isBizDay(d);i++) d=add(d,-1); return iso(d); }
 const needsZen=p=>p&&p.kind!=='long'&&(((p.modules||[]).includes('手配'))||(p.slots||[]).length>0);
-const ZEN_FIELDS=[['callTime','集合（時間・場所）'],['venue','会場'],['workTime','稼働時間'],['bring','服装・持ち物'],['contact','当日の現場連絡先']];
+const ZEN_FIELDS=[['venue','勤務場所'],['workTime','勤務時間'],['callTime','集合時間'],['callPlace','集合場所'],['contact','集合担当'],['bring','服装']];
 const zenMissing=p=>ZEN_FIELDS.filter(([k])=>!String(p[k]||'').trim()).map(([,l])=>l);
 /* 前確タスクを自動で置く・日付を合わせる（renderのたびに呼ぶ。変化があったときだけ保存） */
 function zenLead(){ const v=(S.settings||{}).zenLead; return v===undefined||v===null||v===''?5:+v; }
@@ -2784,40 +2926,55 @@ function zenAlerts(){ const out=[], t=today();
 function zenLi(a){ return `<li class="salert ${a.lv}"><div class="top"><b>前確</b><span>${esc(a.title)}</span></div>
   ${a.miss.length?`<div class="why">足りない：${esc(a.miss.join('・'))}</div>`:''}
   <div class="acts2"><button class="btn sm ${a.lv==='fatal'?'fatalbtn':'primary'}" data-act="zen" data-pid="${a.p.id}">前確を作る</button>${a.miss.length?`<button class="btn sm" data-act="zenAsk" data-pid="${a.p.id}">元請けに確認する文</button>`:''}</div></li>`; }
-function zenText(p,vendor,opt){ const co=company(); const zd=fromIso(zenDate(p)), sdt=fromIso(p.showDate); const nextDay=dd(sdt,zd)===1;
+function zenText(p,vendor,opt){ const sdt=fromIso(p.showDate);
   const people=[]; (p.slots||[]).forEach(s=>{ if(vendor&&vendor!=='全員'&&(s.vendor||'手配先未定')!==vendor) return; const ns=(s.people||[]).map(x=>x.name).filter(Boolean); if(ns.length) people.push(`${s.role}：${ns.join('、')}`); });
-  const L=[]; L.push(`【前日確認】${p.name}`); L.push('');
-  L.push(`お疲れさまです。${co.name.replace(/^株式会社|^合同会社/,'')}の${co.person}です。`);
-  L.push(`${nextDay?'明日':md(sdt)+'から'}の稼働について、最終のご案内です。`); L.push('');
-  const add2=(h,v)=>{ if(v&&String(v).trim()) L.push(`■${h}\n${String(v).trim()}`); };
-  add2('日程',p.dateText||md(sdt)); add2('集合',p.callTime); add2('稼働時間',[p.workTime,p.timeNote].filter(Boolean).join('\n')); add2('会場',[p.venue,p.venueNote].filter(Boolean).join('\n'));
-  add2('アクセス',p.access); add2('服装・持ち物',p.bring); add2('身だしなみ・注意',p.notes); add2('連絡事項',p.zenNote);
-  add2('当日の現場連絡先',p.contact||(co.tel?`${co.person} ${co.tel}`:''));
-  if(opt.members&&people.length) add2('稼働メンバー',people.join('\n'));
-  L.push(''); L.push('遅刻・体調不良などの場合は、必ず当日の現場連絡先までお電話ください。'); L.push(`${nextDay?'明日':md(sdt)+'から'}、どうぞよろしくお願いいたします。`);
-  return L.join('\n').replace(/\n{3,}/g,'\n\n'); }
-function openZen(pid){ const p=P(pid); if(!p) return; const vs=['全員',...new Set((p.slots||[]).map(s=>s.vendor||'手配先未定'))];
-  let st={v:'全員',members:true}; const miss=zenMissing(p);
+  const B=[]; const sec=(h,v)=>{ const t=String(v||'').trim(); if(t) B.push(`◆${h}\n${t}`); };
+  if(opt.head) B.push(`【前日確認】${p.name}\n${p.dateText||md(sdt)}`);
+  sec('勤務場所',[p.venue,p.venueNote].filter(Boolean).join('\n')); sec('勤務時間',[p.workTime,p.timeNote].filter(Boolean).join('\n'));
+  sec('集合時間',p.callTime); sec('集合場所',[p.callPlace,p.arrival].filter(Boolean).join('\n\n'));
+  sec('集合担当',p.contact); sec('アクセス',p.access); sec('服装',p.bring);
+  const it=[p.items,p.caution].filter(x=>String(x||'').trim()).join('\n\n'); if(it) B.push(p.items?`◆持ち物\n${it}`:it);
+  if(p.notes) sec('身だしなみ・注意',p.notes);
+  if(opt.members&&people.length) sec('稼働メンバー',people.join('\n'));
+  B.push(`◆その他\n${String(p.zenNote||'').trim()||'なし'}`);
+  return B.join('\n\n'); }
+const ZEN_SNIPS=[['代表者から連絡','集合場所へ到着されましたら\n下記の集合担当へ電話をして合流してください。\n代表の方1名からご連絡をお願いいたします。\nまた、集合担当の連絡先は代表の方にのみ展開をお願いいたします。','arrival'],
+  ['熱中症対策','★熱中症対策として以下持参可能です。\n帽子（黒のみ）、冷感タオル（シンプルなもののみ）、涼感スプレー、日焼け止め、ネッククーラー（シンプルなもののみ）\n※自己管理となりますので、紛失などにはお気を付けください。\n※現場で急遽使用制限が出る可能性がありますので、その場合は現場担当者の指示に従ってください。','caution'],
+  ['貴重品は自己管理','※貴重品は各自で保管お願いします。\n紛失、盗難については弊社では責任を負うことができません。','zenNote']];
+function openZen(pid){ const p=P(pid); if(!p) return; const vs=['全員',...new Set((p.slots||[]).filter(x=>!isSelfSlot(x)).map(s=>s.vendor||'手配先未定'))];
+  let st={v:'全員',members:true,head:true}; const miss=zenMissing(p);
+  const prev=S.projects.filter(q=>q.id!==p.id&&q.clientId&&q.clientId===p.clientId&&(q.arrival||q.items||q.caution||q.bring)).sort((a,b)=>b.showDate.localeCompare(a.showDate))[0];
+  const ta=(k,l,ph,h)=>`<div class="fld"><label>${l}</label><textarea data-zf="${k}" style="min-height:${h||54}px" placeholder="${esc(ph||'')}">${esc(p[k]||'')}</textarea></div>`;
+  const inp=(k,l,ph)=>`<div class="fld"><label>${l}</label><input data-zf="${k}" value="${esc(p[k]||'')}" placeholder="${esc(ph||'')}"></div>`;
   openSheet(`<h3>前確　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(short(p))}</span></h3>
   <p class="hint" style="margin-top:0">送る日：<b>${md(fromIso(zenDate(p)))}</b>（本番 ${md(fromIso(p.showDate))}${isBizDay(add(fromIso(p.showDate),-1))?'の前日':'。前日が土日祝のため、その前の平日'}）</p>
-  ${miss.length?`<div class="chk" style="display:block;border-color:var(--purple)"><b style="color:var(--purple)">足りない情報：${esc(miss.join('・'))}</b><small style="margin-top:4px">下の欄に入れると案件に保存され、前確に入ります。元請けに聞く必要があれば「元請けに確認する文」を使ってください。</small></div>`:''}
-  <div class="row2"><div class="fld"><label>集合（時間・場所）</label><input data-zf="callTime" value="${esc(p.callTime||'')}" placeholder="例：8:45 西ホール搬入口"></div><div class="fld"><label>稼働時間</label><input data-zf="workTime" value="${esc(p.workTime||'')}" placeholder="例：9:30〜17:30"></div></div>
-  <div class="row2"><div class="fld"><label>会場</label><input data-zf="venue" value="${esc(p.venue||'')}"></div><div class="fld"><label>当日の現場連絡先</label><input data-zf="contact" value="${esc(p.contact||'')}" placeholder="例：中村 090-xxxx-xxxx"></div></div>
-  <div class="fld"><label>服装・持ち物</label><input data-zf="bring" value="${esc(p.bring||'')}"></div>
-  <div class="fld"><label>連絡事項（前確だけに入れる）</label><input data-zf="zenNote" value="${esc(p.zenNote||'')}" placeholder="例：昼食は各自。荷物は控室へ"></div>
+  ${miss.length?`<div class="chk" style="display:block;border-color:var(--purple)"><b style="color:var(--purple)">足りない情報：${esc(miss.join('・'))}</b><small style="margin-top:4px">下の欄に入れると案件に保存されます。元請けに聞く必要があれば「元請けに確認する文」を使ってください。</small></div>`:''}
+  ${prev?`<button type="button" class="btn sm" id="z-prev" style="margin-bottom:10px">前回（${esc(short(prev))}）の集合の流れ・持ち物・注意事項を使う</button>`:''}
+  <div class="row2">${inp('venue','勤務場所','例：お台場海浜公園から徒歩10分')}${inp('workTime','勤務時間','例：14:00〜23:00')}</div>
+  <div class="row2">${inp('callTime','集合時間','例：13:45')}${inp('contact','集合担当','例：讃井 090-xxxx-xxxx')}</div>
+  ${ta('callPlace','集合場所（地図のURLもそのまま貼れます）','例：ボード保管前\nhttps://maps.app.goo.gl/…')}
+  ${ta('arrival','集合時の流れ・連絡ルール','例：到着したら集合担当へ電話。代表者1名から連絡',70)}
+  ${inp('bring','服装','例：黒Tシャツ、黒チノパン、黒か紺のスニーカー')}
+  ${ta('items','持ち物','例：滑り止め付き軍手・ボディバッグ（推奨）・十分な量の水分')}
+  ${ta('caution','注意事項（熱中症対策など）','',70)}
+  ${ta('zenNote','その他（空欄なら「なし」）','')}
+  <div class="fld"><span class="lb">よく使う文を足す</span><div class="seg" id="z-snip">${ZEN_SNIPS.map(([l],i)=>`<button type="button" data-i="${i}">＋ ${l}</button>`).join('')}</div></div>
   ${vs.length>2?`<div class="fld"><span class="lb">送る相手</span><div class="seg" id="zv">${vs.map((v,i)=>`<button type="button" data-v="${esc(v)}" aria-pressed="${i===0}">${esc(v)}</button>`).join('')}</div></div>`:''}
-  <label class="chk" style="padding:8px 10px"><input type="checkbox" id="zm" checked><span>稼働メンバーの名前を入れる</span></label>
-  <textarea class="copyarea" id="zt" style="min-height:220px"></textarea>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="chk" style="padding:8px 10px"><input type="checkbox" id="zh" checked><span>先頭に案件名と日程を入れる</span></label><label class="chk" style="padding:8px 10px"><input type="checkbox" id="zm" checked><span>稼働メンバーの名前を入れる</span></label></div>
+  <textarea class="copyarea" id="zt" style="min-height:260px"></textarea>
   <div class="acts" style="flex-wrap:wrap;gap:8px"><button class="btn" id="z-close">閉じる</button><div style="display:flex;gap:8px"><button class="btn" id="z-copy">コピー</button><button class="btn primary" id="z-done">コピーして送った</button></div></div>`);
-  const paint=()=>{ $('zt').value=zenText(p,st.v,{members:st.members}); }; paint();
-  $('sheet').querySelectorAll('[data-zf]').forEach(inp=>inp.addEventListener('input',()=>{ p[inp.dataset.zf]=inp.value; paint(); }));
-  $('sheet').querySelectorAll('[data-zf]').forEach(inp=>inp.addEventListener('change',()=>{ save(); }));
+  const paint=()=>{ $('zt').value=zenText(p,st.v,{members:st.members,head:st.head}); }; paint();
+  const bind=()=>{ $('sheet').querySelectorAll('[data-zf]').forEach(el=>{ el.oninput=()=>{ p[el.dataset.zf]=el.value; paint(); }; el.onchange=()=>save(); }); }; bind();
+  if($('z-prev')) $('z-prev').onclick=()=>{ ['arrival','items','caution','bring','zenNote'].forEach(k=>{ if(!String(p[k]||'').trim()&&prev[k]){ p[k]=prev[k]; const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=prev[k]; } }); save(); paint(); toast('前回の内容を入れました（空いていた欄だけ）'); };
+  $('z-snip').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const [,txt,k]=ZEN_SNIPS[+b.dataset.i]; p[k]=(String(p[k]||'').trim()?p[k]+'\n':'')+txt; const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=p[k]; save(); paint(); });
   if($('zv')) $('zv').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; st.v=b.dataset.v; [...$('zv').children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); paint(); });
   $('zm').onchange=e=>{ st.members=e.target.checked; paint(); };
+  $('zh').onchange=e=>{ st.head=e.target.checked; paint(); };
   $('z-close').onclick=()=>{ save(); closeSheet(); render(); };
   $('z-copy').onclick=async()=>toast(await copyText($('zt').value,$('zt'))?'コピーしました':'コピーできませんでした');
   $('z-done').onclick=async()=>{ await copyText($('zt').value,$('zt')); snap(); const k=S.tasks.find(t=>t.projectId===p.id&&t.tag==='前確'); if(k) setStatus(k,'done'); save(); closeSheet(); render(); toast('コピーしました。前確を「送った」にしました',true); }; }
-function openZenAsk(pid){ const p=P(pid); if(!p) return; const miss=zenMissing(p).filter(x=>x!=='当日の現場連絡先'||true); const co=company();
+
+function openZenAsk(pid){ const p=P(pid); if(!p) return; const miss=zenMissing(p); const co=company();
   const t=`お疲れさまです。${co.name.replace(/^株式会社|^合同会社/,'')}の${co.person}です。\n${p.name}（${p.dateText||md(fromIso(p.showDate))}）の件で、スタッフへの前日確認に向けて、下記を確認させてください。\n\n${miss.map(m=>'・'+m).join('\n')}\n\nお手数ですが、${md(add(fromIso(zenDate(p)),-1))}までにいただけますと助かります。\nよろしくお願いいたします。`;
   openSheet(`<h3>元請けに確認する文</h3><textarea class="copyarea" id="za" style="min-height:200px">${esc(t)}</textarea>
   <div class="acts"><button class="btn" id="za-close">閉じる</button><button class="btn primary" id="za-copy">コピーして返事待ちにする</button></div>`);
@@ -3097,7 +3254,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29e';
+const APP_VER='2026.09.29i';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
