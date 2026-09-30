@@ -2235,7 +2235,8 @@ const tax=n=>Math.floor(n*0.1);
 function clientOf(p){ return (S.clients||[]).find(c=>c.id===p.clientId)||null; }
 function cname(c){ return c?c.name:'元請け未設定'; }
 function billKeyOf(p){ const c=clientOf(p); return (c?c.id:'_none')+'|'+billMonthOf(p,c)+(p.payDue?'|'+p.payDue:''); }
-function billMonthOf(p,c){ const d=fromIso(p.showDate); const cd=(c&&+c.closeDay)||31; let y=d.getFullYear(), m=d.getMonth()+1;
+/* 月をまたぐ案件は、最終日の月で計上する */
+function billMonthOf(p,c){ const d=fromIso(p.kind==='long'?p.showDate:projEnd(p)); const cd=(c&&+c.closeDay)||31; let y=d.getFullYear(), m=d.getMonth()+1;
   if(cd<28 && d.getDate()>cd){ m++; if(m>12){ m=1; y++; } } return y+'-'+String(m).padStart(2,'0'); }
 function dueOf(bm,c){ const [y,m]=bm.split('-').map(Number); let mm=m+((c&&c.payMonths!=null)?+c.payMonths:1), yy=y; while(mm>12){ mm-=12; yy++; }
   const pd=(c&&+c.payDay)||31; return iso(new Date(yy,mm-1,Math.min(pd,lastDay(yy,mm)))); }
@@ -2349,7 +2350,7 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
     <div class="mr"><em>${yen(v.ramt+(taxIn?tax(v.ramt):0))}</em><i class="chip ${PST[v.status]} ${hot?'hot':''}">${v.status}</i>${((S.pays||{})[v.key]||{}).files&&(S.pays[v.key].files||[]).length?'<i class="chip">請求書あり</i>':''}</div></li>`; };
   const gapPs=S.projects.filter(p=>p.kind!=='long'&&(p.slots||[]).length&&moneyGaps(p).length&&billMonthOf(p,clientOf(p))===moneyMonth);
   el.innerHTML=segP+nav+(gapPs.length?`<div class="sec"><h2 style="color:var(--purple)">お金に入っていない案件 <small>${gapPs.length}件</small></h2><ul class="mlist">${gapPs.map(p=>`<li class="mrow" data-act="projMoney" data-pid="${p.id}"><div class="ml"><b>${esc(p.name)}</b><span>${esc(moneyGaps(p).join('・'))}が未入力</span></div><div class="mr"><em>›</em></div></li>`).join('')}</ul></div>`:'')+`
-  <div class="seg mmode"><button type="button" data-act="mMode" data-m="work" aria-pressed="${moneyMode==='work'}">粗利<small>稼働した月</small></button><button type="button" data-act="mMode" data-m="cash" aria-pressed="${moneyMode==='cash'}">資金繰り<small>お金が動く月</small></button></div>
+  <div class="seg mmode"><button type="button" data-act="mMode" data-m="work" aria-pressed="${moneyMode==='work'}">粗利<small>稼働した月（月またぎは最終日の月）</small></button><button type="button" data-act="mMode" data-m="cash" aria-pressed="${moneyMode==='cash'}">資金繰り<small>お金が動く月</small></button></div>
   <div class="msum"><div><span>${moneyMode==='work'?'売上':'入ってくる'}</span><b>${yen(sale)}</b></div><div><span>${moneyMode==='work'?'支払':'出ていく'}</span><b>${yen(cost)}</b></div><div class="g"><span>${moneyMode==='work'?'粗利':'差し引き'}</span><b>${yen(g)}</b>${moneyMode==='work'?`<small>${pct1(g,sale)}%</small>`:''}</div></div>
   <button class="mexp" data-act="expList"><span>経費</span><b>${yen(exp)}</b><small>税抜・${expItems([moneyMonth]).length}件</small>${moneyMode==='work'?`<span class="sep">利益（概算）</span><b class="pf">${yen(g-exp)}</b>`:''}<em>内訳を見る ›</em></button>
   ${moneyMode==='work'?`<p class="hint">粗利は税抜きの金額です。自社の稼働（Luo）は支払いに含めていません。</p>`:'<p class="hint">資金繰りは消費税込みの金額です。「出ていく」には、手配先への支払いに加えて、経費と借入金の返済なども入っています。</p>'}
@@ -3261,7 +3262,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29j';
+const APP_VER='2026.09.29k';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
