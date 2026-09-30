@@ -1417,7 +1417,7 @@ $('srcRow').addEventListener('click',e=>{ const b=e.target.closest('button'); if
 function preview(){
   const v=capIn.value.trim(), pv=$('pv'); if(!v){ pv.innerHTML=''; return; }
   if(isBoshu(v)){ pv.innerHTML='<span class="boshu">募集文として読み込みます</span><button type="button" data-ign="boshu" class="off">タスクとして入れる</button>'; return; }
-  if(isExpense(v)){ const r=parse(v,ign), a=expAmount(v); pv.innerHTML=`<span class="boshu">${NON_EXP.has(guessAcct(v))?(/毎月|月額|固定費|返済|ローン/.test(v)?'毎月の支払い（経費外）として入れます':'支払い（経費外）として入れます'):/毎月|月額|固定費/.test(v)?'毎月の固定費として入れます':'経費として入れます'}</span><span class="multi">${yen(a)}　${guessAcct(v)}${r.proj?'　'+esc(short(r.proj))+'の経費':''}</span><button type="button" data-ign="exp" class="off">タスクにする</button>`; return; }
+  if(isExpense(v)){ const r=parse(v,ign), a=expAmount(v); pv.innerHTML=`<span class="boshu">${NON_EXP.has(guessAcct(v))?(/毎月|月額|固定費|返済|ローン/.test(v)?'毎月の支払い（経費外）として入れます':'支払い（経費外）として入れます'):/毎月|月額|固定費|給与|給料|役員報酬|社会保険/.test(v)?'毎月の固定費として入れます':'経費として入れます'}${NOTAX_ACCTS.has(guessAcct(v))?'（消費税なし）':''}</span><span class="multi">${yen(a)}　${guessAcct(v)}${r.proj?'　'+esc(short(r.proj))+'の経費':''}</span><button type="button" data-ign="exp" class="off">タスクにする</button>`; return; }
   if(!expAmount(v) && /返済|ローン|経費|立替|立て替え|駐車|タクシー|レシート|領収書|月額|固定費/.test(v) && !isBoshu(v)){ const r0=parse(v,ign); pv.innerHTML=`<span class="multi">金額も書くと、経費・支払いとして記録できます（例：${esc(v.slice(0,12))} 5万円）</span>`+(r0.proj?`<span class="multi">${esc(short(r0.proj))}</span>`:''); return; }
   if(ign.exp && expAmount(v)){ pv.innerHTML='<button type="button" data-ign="exp">経費として入れる</button><span class="multi">今はタスクとして入ります</span>'; return; }
   if(ign.boshu && v.split('\n').filter(x=>x.trim()).length>=4){ pv.innerHTML='<button type="button" data-ign="boshu">募集文として読み込む</button><span class="multi">今は行ごとにタスクとして入ります</span>'; return; }
@@ -1439,26 +1439,29 @@ capIn.addEventListener('focus',()=>dock.classList.add('focus'));
 capIn.addEventListener('blur',()=>setTimeout(()=>{ if(document.activeElement!==capIn) dock.classList.remove('focus'); },150));
 $('capForm').addEventListener('submit',e=>{ e.preventDefault(); submitCap(); });
 /* 経費：金額が入った1行は経費として入れる（タスクにも切り替え可） */
-const EXP_WORD=/返済|ローン|借入|利息|リース|保険|税金|年会費|会費|振込手数料|毎月|月額|固定費|家賃|経費|立替|立て替え|レシート|領収書|駐車|パーキング|タクシー|電車|交通費|高速|ETC|ガソリン|給油|弁当|飲み物|差し入れ|備品|購入|買った|買い出し|コンビニ|宿泊|ホテル|送料|宅配|郵送|文具|テープ|養生|レンタル|手数料/;
+const EXP_WORD=/給与|給料|役員報酬|社会保険|税金|返済|ローン|借入|利息|リース|保険|税金|年会費|会費|振込手数料|毎月|月額|固定費|家賃|経費|立替|立て替え|レシート|領収書|駐車|パーキング|タクシー|電車|交通費|高速|ETC|ガソリン|給油|弁当|飲み物|差し入れ|備品|購入|買った|買い出し|コンビニ|宿泊|ホテル|送料|宅配|郵送|文具|テープ|養生|レンタル|手数料/;
 function expAmount(t){ t=String(t||'').normalize('NFKC').replace(/，/g,',');
   let m=t.match(/(\d+(?:\.\d+)?)\s*万\s*(?:(\d+)\s*千)?\s*(\d+)?\s*円?/); if(m){ return Math.round(+m[1]*10000+(m[2]?+m[2]*1000:0)+(m[3]?+m[3]:0)); }
   m=t.match(/(\d+(?:\.\d+)?)\s*千\s*円?/); if(m) return Math.round(+m[1]*1000);
   m=t.match(/(?:¥|￥)\s*([\d,]+)|([\d,]+)\s*円/); if(!m) return 0; return +(m[1]||m[2]).replace(/,/g,''); }
 const AMT_RE=/(?:¥|￥)\s*[\d,]+|\d+(?:\.\d+)?\s*万\s*(?:\d+\s*千)?\s*\d*\s*円?|\d+(?:\.\d+)?\s*千\s*円?|[\d,]+\s*円/;
 const isExpense=v=>{ if(ign.exp) return false; if(v.split('\n').filter(x=>x.trim()).length>1) return false; const a=expAmount(v); return a>0 && a<100000000 && (EXP_WORD.test(v) || v.normalize('NFKC').replace(AMT_RE,'').trim().length<=14); };
-function guessAcct(t){ if(/返済|ローン|借入/.test(t)&&!/利息|金利/.test(t)) return '借入金の返済'; if(/利息|金利/.test(t)) return '支払利息'; if(/リース/.test(t)) return '賃借料'; if(/年会費|会費/.test(t)) return '諸会費'; if(/家賃|賃料|事務所/.test(t)||(/毎月|月額|固定費/.test(t)&&/駐車場/.test(t))) return '地代家賃'; if(/Notion|Cursor|Microsoft|Office|マネーフォワード|MF|Adobe|Google|Workspace|ChatGPT|Claude|Gemini|Slack|Zoom|Canva|Dropbox|サブスク|利用料/i.test(t)) return '通信費'; if(/顧問料|税理士|社労士/.test(t)) return '支払報酬'; if(/保険/.test(t)) return '保険料'; if(/通信|携帯|スマホ|ネット|回線|ソフト|サブスク|サーバー/.test(t)) return '通信費'; if(/給与|給料|賞与/.test(t)) return '給料手当'; if(/保険/.test(t)) return '保険料'; if(/駐車|パーキング|タクシー|電車|交通|高速|ETC|宿泊|ホテル|新幹線|バス/.test(t)) return '旅費交通費'; if(/ガソリン|給油|車検|洗車/.test(t)) return '車両費';
+function guessAcct(t){ if(/役員報酬/.test(t)) return '役員報酬'; if(/給与|給料|賞与|アルバイト代/.test(t)) return '給料手当'; if(/社会保険|厚生年金|健康保険|雇用保険|労働保険/.test(t)) return '法定福利費'; if(/住民税|源泉|税金|印紙|固定資産税|法人税|事業税/.test(t)) return '租税公課'; if(/返済|ローン|借入/.test(t)&&!/利息|金利/.test(t)) return '借入金の返済'; if(/利息|金利/.test(t)) return '支払利息'; if(/リース/.test(t)) return '賃借料'; if(/年会費|会費/.test(t)) return '諸会費'; if(/家賃|賃料|事務所/.test(t)||(/毎月|月額|固定費/.test(t)&&/駐車場/.test(t))) return '地代家賃'; if(/Notion|Cursor|Microsoft|Office|マネーフォワード|MF|Adobe|Google|Workspace|ChatGPT|Claude|Gemini|Slack|Zoom|Canva|Dropbox|サブスク|利用料/i.test(t)) return '通信費'; if(/顧問料|税理士|社労士/.test(t)) return '支払報酬'; if(/保険/.test(t)) return '保険料'; if(/通信|携帯|スマホ|ネット|回線|ソフト|サブスク|サーバー/.test(t)) return '通信費'; if(/給与|給料|賞与/.test(t)) return '給料手当'; if(/保険/.test(t)) return '保険料'; if(/駐車|パーキング|タクシー|電車|交通|高速|ETC|宿泊|ホテル|新幹線|バス/.test(t)) return '旅費交通費'; if(/ガソリン|給油|車検|洗車/.test(t)) return '車両費';
   if(/備品|テープ|養生|文具|購入|買った|買い出し|電池|消耗/.test(t)) return '消耗品費'; if(/送料|宅配|郵送|ゆうパック/.test(t)) return '荷造運賃'; if(/レンタル|リース/.test(t)) return '賃借料';
   if(/弁当|飲み物|差し入れ|食事|昼食/.test(t)) return '会議費'; if(/手数料|振込/.test(t)) return '支払手数料'; return '雑費'; }
+const NOTAX_ACCTS=new Set(['借入金の返済','支払利息','給料手当','役員報酬','法定福利費','租税公課','保険料']); // 消費税のかからない支払い
+const isNoTax=x=>x&&(x.taxType==='none'||(x.taxType!=='tax10'&&NOTAX_ACCTS.has(x.acct)));
+const taxChip=x=>isNoTax(x)?'税なし':x.taxIncl?'税込':'税抜';
 const NON_EXP=new Set(['借入金の返済']); // 経費ではない支払い（利益の計算には入れず、お金の出入りとして記録）
-const ACCTS=['借入金の返済','支払利息','諸会費','旅費交通費','車両費','消耗品費','会議費','交際費','荷造運賃','賃借料','支払手数料','支払報酬','通信費','地代家賃','保険料','福利厚生費','雑費'];
+const ACCTS=['給料手当','役員報酬','法定福利費','租税公課','借入金の返済','支払利息','諸会費','旅費交通費','車両費','消耗品費','会議費','交際費','荷造運賃','賃借料','支払手数料','支払報酬','通信費','地代家賃','保険料','福利厚生費','雑費'];
 function addExpenseText(v,ig){ snap(); const r=parse(v,ig||{}), a=expAmount(v);
   const label=v.normalize('NFKC').replace(AMT_RE,'').replace(/経費|立替|立て替え/g,'').replace(r.hit||'\u0000','').replace(/\s{2,}/g,' ').trim()||'経費';
   S.expenses=S.expenses||[]; const day=r.due&&r.due<=iso(today())?r.due:iso(today());
-  const rec=/毎月|月額|固定費|返済|ローン/.test(v);
+  const rec=/毎月|月額|固定費|返済|ローン|給与|給料|役員報酬|社会保険/.test(v);
   if(rec){ const lb=label.replace(/毎月|月額|固定費/g,'').trim()||'固定費';
-    S.expenses.push({id:uid(),label:lb,amount:String(a),taxIncl:true,acct:guessAcct(v),start:day.slice(0,7),end:'',recurring:true,projectId:'',raw:v,overrides:{}});
+    S.expenses.push({id:uid(),label:lb,amount:String(a),taxIncl:true,taxType:NOTAX_ACCTS.has(guessAcct(v))?'none':'',acct:guessAcct(v),start:day.slice(0,7),end:'',recurring:true,projectId:'',raw:v,overrides:{}});
     save(); render(); expToast=true; toast(`毎月の${NON_EXP.has(guessAcct(v))?'支払い':'固定費'}に ${lb} ${yen(a)} を入れました（${guessAcct(v)}${NON_EXP.has(guessAcct(v))?'・経費外':''}）`,true); return; }
-  S.expenses.push({id:uid(),label,amount:String(a),taxIncl:true,acct:guessAcct(v),start:day.slice(0,7),date:day,recurring:false,projectId:r.proj?r.proj.id:'',raw:v});
+  S.expenses.push({id:uid(),label,amount:String(a),taxIncl:true,taxType:NOTAX_ACCTS.has(guessAcct(v))?'none':'',acct:guessAcct(v),start:day.slice(0,7),date:day,recurring:false,projectId:r.proj?r.proj.id:'',raw:v});
   save(); render(); expToast=true; toast(`経費 ${yen(a)} を入れました（${guessAcct(v)}${r.proj?'・'+short(r.proj):''}）`,true); }
 let expToast=false;
 const isBoshu=v=>{ if(ign.boshu) return false; const ls=v.split('\n').filter(x=>x.trim()); if(ls.length<4) return false; let sc=0;
@@ -2296,7 +2299,7 @@ function periodLabel(anchor,per){ const ms=periodMonths(anchor,per); const a=ms[
   const endD=new Date(z[0],z[1]-1,lastDay(z[0],z[1])), left=dd(endD,today()); return {main:fyLabel(anchor),sub:`${a[0]}年${a[1]}月〜${z[0]}年${z[1]}月${left>=0&&left<=365?`　決算まであと${left}日`:''}`}; }
 /* 固定費は月ごとに金額を上書きできる（overrides: {'2026-09': 金額}） */
 const amtFor=(x,bm)=>{ const o=x.overrides&&bm&&x.overrides[bm]; return (o!==undefined&&o!==null&&o!=='')?+o:(+x.amount||0); };
-const exNet=(x,bm)=>{ const a=amtFor(x,bm); return x.taxIncl?Math.round(a/1.1):a; };
+const exNet=(x,bm)=>{ const a=amtFor(x,bm); return isNoTax(x)?a:x.taxIncl?Math.round(a/1.1):a; };
 const hasOv=(x,bm)=>!!(x.overrides&&x.overrides[bm]!==undefined&&x.overrides[bm]!==null&&x.overrides[bm]!=='');
 function expensesFor(bm){ if(bm>iso(today()).slice(0,7)) return 0; return (S.expenses||[]).filter(x=>!NON_EXP.has(x.acct)).filter(x=>x.recurring?(x.start<=bm&&(!x.end||x.end>=bm)):x.start===bm).reduce((a,x)=>a+exNet(x,bm),0); }
 function reportFor(months){ const set=new Set(months); const bills=billsAll().filter(b=>set.has(b.bm)), pays=paysAll().filter(v=>set.has(v.bm));
@@ -2369,7 +2372,8 @@ function reportTSV(){ const months=periodMonths(moneyMonth,moneyPeriod), r=repor
   t+=`\n手配先\t支払\n`; r.byV.forEach(v=>{ t+=`${v.name}\t${v.cost}\n`; }); return t; }
 function openExpenses(){ S.expenses=S.expenses||[]; const cm=iso(today()).slice(0,7);
   const row=x=>`<div class="payrow" data-eid="${x.id}"><div class="row2"><div class="fld" style="flex:2"><label>項目</label><input data-k="label" value="${esc(x.label)}" placeholder="例：事務所家賃、通信費、社員給与"></div>
-    <div class="fld"><label>金額（税抜・月）</label><input data-k="amount" type="number" inputmode="numeric" value="${esc(x.amount||'')}"></div></div>
+    <div class="fld"><label>金額（月・実際に払う額）</label><input data-k="amount" type="number" inputmode="numeric" value="${esc(x.amount||'')}"></div>
+    <div class="fld"><label>消費税</label><select data-k="taxMode"><option value="in" ${!isNoTax(x)&&x.taxIncl!==false?'selected':''}>10%込み</option><option value="out" ${!isNoTax(x)&&x.taxIncl===false?'selected':''}>10%抜き（別に10%かかる）</option><option value="none" ${isNoTax(x)?'selected':''}>なし（給与・返済など）</option></select></div></div>
     <div class="row2"><div class="fld"><label>いつから</label><input data-k="start" type="month" value="${esc(x.start||cm)}"></div><div class="fld"><label>いつまで（毎月の場合）</label><input data-k="end" type="month" value="${esc(x.end||'')}"></div></div>
     <div style="display:flex;justify-content:space-between;align-items:center"><label class="chk" style="padding:6px 10px"><input type="checkbox" data-k="recurring" ${x.recurring!==false?'checked':''}><span>毎月かかる</span></label><button type="button" class="linkbtn" data-rm>外す</button></div></div>`;
   openSheet(`<h3>毎月かかる経費</h3><p class="hint" style="margin-top:0">家賃・給与・通信費など、毎月決まってかかるものを一度だけ登録します。駐車場代や備品などその都度の経費は、下の入力欄に「駐車場 1500円」のように書くだけで入ります。</p>
@@ -2378,23 +2382,26 @@ function openExpenses(){ S.expenses=S.expenses||[]; const cm=iso(today()).slice(
   $('ex-add').onclick=()=>{ $('ex').insertAdjacentHTML('beforeend',row({id:uid(),label:'',amount:'',start:cm,recurring:true})); $('ex').lastElementChild.querySelector('input').focus(); };
   $('ex').addEventListener('click',e=>{ if(e.target.closest('[data-rm]')) e.target.closest('[data-eid]').remove(); });
   $('ex-close').onclick=closeSheet;
-  $('ex-save').onclick=()=>{ snap(); const ones=S.expenses.filter(x=>x.recurring===false); const old=Object.fromEntries(S.expenses.map(x=>[x.id,x])); S.expenses=ones.concat([...$('ex').querySelectorAll('[data-eid]')].map(r=>{ const o=Object.assign({},old[r.dataset.eid]||{},{id:r.dataset.eid}); r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.type==='checkbox'?i.checked:i.value.trim()); return o; }).filter(x=>x.label&&+x.amount));
+  $('ex-save').onclick=()=>{ snap(); const ones=S.expenses.filter(x=>x.recurring===false); const old=Object.fromEntries(S.expenses.map(x=>[x.id,x])); S.expenses=ones.concat([...$('ex').querySelectorAll('[data-eid]')].map(r=>{ const o=Object.assign({},old[r.dataset.eid]||{},{id:r.dataset.eid}); r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.type==='checkbox'?i.checked:i.value.trim()); if(o.taxMode){ o.taxType=o.taxMode==='none'?'none':'tax10'; o.taxIncl=o.taxMode!=='out'; if(o.taxMode!=='none'&&!NOTAX_ACCTS.has(o.acct)) o.taxType=''; delete o.taxMode; } if(!o.acct) o.acct=guessAcct(o.label||''); return o; }).filter(x=>x.label&&+x.amount));
     save(); closeSheet(); render(); toast('経費を保存しました',true); }; }
 function openExpEdit(id){ const x=(S.expenses||[]).find(e=>e.id===id); if(!x) return;
   openSheet(`<h3>経費</h3>
-  <div class="row2"><div class="fld" style="flex:2"><label for="xe-l">内容</label><input id="xe-l" value="${esc(x.label)}"></div><div class="fld"><label for="xe-a">金額（税込・レシートの額）</label><input id="xe-a" type="number" inputmode="numeric" value="${esc(x.amount)}"></div></div>
+  <div class="row2"><div class="fld" style="flex:2"><label for="xe-l">内容</label><input id="xe-l" value="${esc(x.label)}"></div><div class="fld"><label for="xe-a">金額（実際に払った額）</label><input id="xe-a" type="number" inputmode="numeric" value="${esc(x.amount)}"></div></div>
   <div class="row2"><div class="fld"><label for="xe-d">日付</label><input id="xe-d" type="date" value="${esc(x.date||'')}"></div><div class="fld"><label for="xe-p">案件</label><select id="xe-p">${projOptions(x.projectId,'案件なし（会社の経費）')}</select></div></div>
+  <div class="fld"><span class="lb">消費税</span><div class="seg" id="xe-t"><button type="button" data-t="tax10" aria-pressed="${!isNoTax(x)}">10%込み</button><button type="button" data-t="none" aria-pressed="${isNoTax(x)}">なし（給与・返済・税金など）</button></div>
+    <p class="hint">「なし」にすると、入れた金額をそのまま経費にします（消費税分を引きません）。</p></div>
   <div class="fld"><span class="lb">勘定科目（自動で推測しています）</span><div class="seg" id="xe-c">${ACCTS.map(c=>`<button type="button" data-c="${c}" aria-pressed="${x.acct===c}">${c}</button>`).join('')}</div></div>
   ${x.raw?`<div class="fld"><span class="lb">入力したときの原文</span><div class="raw">${esc(x.raw)}</div></div>`:''}
   <div class="acts"><button class="btn danger" id="xe-del">削除</button><div style="display:flex;gap:8px"><button class="btn" id="xe-close">閉じる</button><button class="btn primary" id="xe-save">保存</button></div></div>`);
-  let acct=x.acct;
-  $('xe-c').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; acct=b.dataset.c; [...$('xe-c').children].forEach(c=>c.setAttribute('aria-pressed',c===b?'true':'false')); });
+  let acct=x.acct, ttype=isNoTax(x)?'none':'tax10';
+  $('xe-t').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; ttype=b.dataset.t; [...$('xe-t').children].forEach(y=>y.setAttribute('aria-pressed',y===b?'true':'false')); });
+  $('xe-c').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; acct=b.dataset.c; if(NOTAX_ACCTS.has(acct)){ ttype='none'; [...$('xe-t').children].forEach(y=>y.setAttribute('aria-pressed',y.dataset.t==='none'?'true':'false')); } [...$('xe-c').children].forEach(c=>c.setAttribute('aria-pressed',c===b?'true':'false')); });
   $('xe-close').onclick=closeSheet;
   $('xe-del').onclick=()=>{ snap(); S.expenses=S.expenses.filter(e=>e.id!==id); save(); closeSheet(); render(); toast('削除しました',true); };
-  $('xe-save').onclick=()=>{ snap(); x.label=$('xe-l').value.trim()||x.label; x.amount=String(+$('xe-a').value||0); x.date=$('xe-d').value||x.date; x.start=(x.date||x.start).slice(0,7); x.projectId=$('xe-p').value; x.acct=acct; save(); closeSheet(); render(); toast('保存しました',true); }; }
+  $('xe-save').onclick=()=>{ snap(); x.label=$('xe-l').value.trim()||x.label; x.amount=String(+$('xe-a').value||0); x.date=$('xe-d').value||x.date; x.start=(x.date||x.start).slice(0,7); x.projectId=$('xe-p').value; x.acct=acct; x.taxType=ttype; x.taxIncl=true; save(); closeSheet(); render(); toast('保存しました',true); }; }
 function expItems(months){ const set=new Set(months), out=[];
-  (S.expenses||[]).forEach(x=>{ if(x.recurring===false){ if(set.has(x.start)) out.push({x,bm:x.start,net:exNet(x),gross:x.taxIncl?+x.amount:Math.floor((+x.amount||0)*1.1),date:x.date||x.start+'-01',one:true}); }
-    else months.forEach(bm=>{ if(bm<=iso(today()).slice(0,7) && x.start<=bm && (!x.end||x.end>=bm)){ const n=exNet(x,bm); out.push({x,bm,net:n,gross:x.taxIncl?amtFor(x,bm):Math.floor(n*1.1),date:bm+'-01',one:false,ov:hasOv(x,bm)}); } }); });
+  (S.expenses||[]).forEach(x=>{ if(x.recurring===false){ if(set.has(x.start)) out.push({x,bm:x.start,net:exNet(x),gross:(isNoTax(x)||x.taxIncl)?+x.amount:Math.floor((+x.amount||0)*1.1),date:x.date||x.start+'-01',one:true}); }
+    else months.forEach(bm=>{ if(bm<=iso(today()).slice(0,7) && x.start<=bm && (!x.end||x.end>=bm)){ const n=exNet(x,bm); out.push({x,bm,net:n,gross:(isNoTax(x)||x.taxIncl)?amtFor(x,bm):Math.floor(n*1.1),date:bm+'-01',one:false,ov:hasOv(x,bm)}); } }); });
   return out.sort((a,b)=>b.date.localeCompare(a.date)); }
 function openExpList(){ const months=periodMonths(moneyMonth,moneyPeriod), lab=periodLabel(moneyMonth,moneyPeriod), items=expItems(months);
   const expI=items.filter(i=>!NON_EXP.has(i.x.acct)); const nonI=items.filter(i=>NON_EXP.has(i.x.acct));
@@ -2402,12 +2409,12 @@ function openExpList(){ const months=periodMonths(moneyMonth,moneyPeriod), lab=p
   const byA={}; expI.forEach(i=>{ const k=i.x.acct||guessAcct(i.x.label); byA[k]=(byA[k]||0)+i.net; }); const aList=Object.entries(byA).sort((a,b)=>b[1]-a[1]);
   const byP={}; items.filter(i=>i.x.projectId&&P(i.x.projectId)).forEach(i=>{ const k=P(i.x.projectId).name; byP[k]=(byP[k]||0)+i.net; });
   openSheet(`<h3>経費　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(lab.main)}</span></h3>
-  <div class="msum sm"><div><span>税抜</span><b>${yen(net)}</b></div><div><span>税込（目安）</span><b>${yen(gross)}</b></div><div><span>件数</span><b>${expI.length}件</b></div></div>
+  <div class="msum sm"><div><span>経費（税抜）</span><b>${yen(net)}</b></div><div><span>支払った額</span><b>${yen(gross)}</b></div><div><span>件数</span><b>${expI.length}件</b></div></div>
   ${nonI.length?`<p class="hint">経費ではない支払い（借入金の返済など）${yen(nonSum)} は、利益の計算には入れていません。資金繰りでは出ていくお金に入ります。</p>`:''}
   <form class="xadd" id="xadd" autocomplete="off"><input id="xadd-in" placeholder="例：駐車場 1500円／大塚 タクシー 2300円" aria-label="経費を1行で入れる"><button class="btn primary sm" type="submit">入れる</button></form>
   ${aList.length?`<div class="fld"><span class="lb">勘定科目別</span><div class="abar">${aList.map(([k,v])=>`<div><span>${esc(k)}</span><i style="width:${Math.max(4,Math.round(v/net*100))}%"></i><b>${yen(v)}</b></div>`).join('')}</div></div>`:''}
   ${Object.keys(byP).length?`<div class="fld"><span class="lb">案件にかかった経費</span><div class="pvlist">${Object.entries(byP).map(([k,v])=>`<div><b>${esc(k)}</b><span>${yen(v)}</span></div>`).join('')}</div></div>`:''}
-  <div class="fld"><span class="lb">明細（タップで確認・修正）</span>${items.length?`<ul class="mlist">${items.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}${i.ov?'<i class="chip ovc">この月だけ変更</i>':''}</b><span>${i.one?md(fromIso(i.date)):ymLabel(i.bm)+'　毎月'}　${esc(i.x.acct||guessAcct(i.x.label))}${i.x.projectId&&P(i.x.projectId)?'　'+esc(short(P(i.x.projectId))):''}</span></div><div class="mr"><em>${yen(i.x.taxIncl?amtFor(i.x,i.bm):i.net)}</em><i class="chip">${NON_EXP.has(i.x.acct)?'経費外':i.x.taxIncl?'税込':'税抜'}</i></div></li>`).join('')}</ul>`:'<div class="empty">この期間の経費はまだありません。</div>'}</div>
+  <div class="fld"><span class="lb">明細（タップで確認・修正）</span>${items.length?`<ul class="mlist">${items.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}${i.ov?'<i class="chip ovc">この月だけ変更</i>':''}</b><span>${i.one?md(fromIso(i.date)):ymLabel(i.bm)+'　毎月'}　${esc(i.x.acct||guessAcct(i.x.label))}${i.x.projectId&&P(i.x.projectId)?'　'+esc(short(P(i.x.projectId))):''}</span></div><div class="mr"><em>${yen((i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.net)}</em><i class="chip">${NON_EXP.has(i.x.acct)?'経費外':taxChip(i.x)}</i></div></li>`).join('')}</ul>`:'<div class="empty">この期間の経費はまだありません。</div>'}</div>
   <div class="acts"><button class="btn sm" data-act="expenses">毎月の経費を編集</button><button class="btn" id="xl-close">閉じる</button></div>`);
   $('xl-close').onclick=closeSheet;
   $('xadd').addEventListener('submit',e=>{ e.preventDefault(); const v=$('xadd-in').value.trim(); if(!v) return; if(!expAmount(v)){ toast('金額が読み取れませんでした。「駐車場 1500円」のように書いてください'); return; } addExpenseText(v,{}); openExpList(); });
@@ -2447,7 +2454,7 @@ function openTaskToExp(id){ const k=T(id); if(!k) return; const src=(k.raw&&k.ra
   $('te-r').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; recur=b.dataset.v==='1'; [...$('te-r').children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); });
   $('te-no').onclick=closeSheet;
   $('te-go').onclick=()=>{ const amt=+$('te-a').value; if(!amt){ toast('金額を入れてください'); return; } snap(); const d=$('te-d').value||iso(today());
-    S.expenses=S.expenses||[]; S.expenses.push({id:uid(),label:$('te-l').value.trim()||k.title,amount:String(amt),taxIncl:true,acct,start:d.slice(0,7),date:recur?'':d,end:'',recurring:recur,projectId:recur?'':$('te-p').value,raw:k.raw||k.title,overrides:{}});
+    S.expenses=S.expenses||[]; S.expenses.push({id:uid(),label:$('te-l').value.trim()||k.title,amount:String(amt),taxIncl:true,taxType:NOTAX_ACCTS.has(acct)?'none':'',acct,start:d.slice(0,7),date:recur?'':d,end:'',recurring:recur,projectId:recur?'':$('te-p').value,raw:k.raw||k.title,overrides:{}});
     S.tasks=S.tasks.filter(x=>x.id!==k.id); save(); closeSheet(); render(); expToast=true; toast(`${recur?'毎月の支払い':'支払い'}として記録しました（${acct}）`,true); }; }
 function openSelf(pid,sid){ const p=P(pid); if(!p) return; p.slots=p.slots||[]; const s=sid?p.slots.find(x=>x.id===sid):null;
   const names=s?(s.people||[]).map(x=>x.name).filter(Boolean).join('、'):(company().person||'中村');
@@ -3265,7 +3272,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29l';
+const APP_VER='2026.09.29m';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
