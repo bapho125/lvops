@@ -2355,7 +2355,10 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   <button class="mexp" data-act="expList"><span>経費</span><b>${yen(exp)}</b><small>税抜・${expItems([moneyMonth]).length}件</small>${moneyMode==='work'?`<span class="sep">利益（概算）</span><b class="pf">${yen(g-exp)}</b>`:''}<em>内訳を見る ›</em></button>
   ${moneyMode==='work'?`<p class="hint">粗利は税抜きの金額です。自社の稼働（Luo）は支払いに含めていません。</p>`:'<p class="hint">資金繰りは消費税込みの金額です。「出ていく」には、手配先への支払いに加えて、経費と借入金の返済なども入っています。</p>'}
   <div class="sec msec"><h2>入ってくるお金 <small>元請けへの請求</small></h2>${inB.length?`<ul class="mlist">${inB.sort((a,b)=>a.due.localeCompare(b.due)).map(billRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}</div>
-  <div class="sec msec"><h2>出ていくお金 <small>手配先への支払い</small></h2>${outP.length?`<ul class="mlist">${outP.sort((a,b)=>a.due.localeCompare(b.due)).map(payRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}</div>
+  <div class="sec msec"><h2>出ていくお金 <small>手配先への支払い</small></h2>${outP.length?`<ul class="mlist">${outP.sort((a,b)=>a.due.localeCompare(b.due)).map(payRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}
+  ${moneyMode==='cash'?(()=>{ const xs=expItems([moneyMonth]).sort((a,b)=>String(a.date).localeCompare(String(b.date))); if(!xs.length) return '';
+    const tot=xs.reduce((a,i)=>a+(i.x.taxIncl?amtFor(i.x,i.bm):i.gross),0);
+    return `<h2 style="margin-top:14px">出ていくお金 <small>経費・返済など　${yen(tot)}</small></h2><ul class="mlist">${xs.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}</b><span>${i.one?md(fromIso(i.date)):'毎月'}　${esc(i.x.acct||'')}</span></div><div class="mr"><em>${yen(i.x.taxIncl?amtFor(i.x,i.bm):i.gross)}</em>${NON_EXP.has(i.x.acct)?'<i class="chip">経費外</i>':''}</div></li>`).join('')}</ul>`; })():''}</div>
   ${moneyMode==='work'?(()=>{ const one=(S.expenses||[]).filter(x=>!x.recurring&&x.start===moneyMonth).sort((a,b)=>(b.date||'').localeCompare(a.date||'')); const rec=(S.expenses||[]).filter(x=>x.recurring&&x.start<=moneyMonth&&(!x.end||x.end>=moneyMonth));
     return `<div class="sec"><h2>経費 <small>税抜 ${yen(exp)}　</small></h2>${one.length||rec.length?`<ul class="mlist">${one.map(x=>`<li class="mrow" data-act="expEdit" data-eid="${x.id}"><div class="ml"><b>${esc(x.label)}</b><span>${x.date?md(fromIso(x.date)):''}　${esc(x.acct||'')}${x.projectId&&P(x.projectId)?'　'+esc(short(P(x.projectId))):''}</span></div><div class="mr"><em>${yen(+x.amount)}</em></div></li>`).join('')}${rec.map(x=>`<li class="mrow" data-act="expMonth" data-eid="${x.id}" data-bm="${moneyMonth}"><div class="ml"><b>${esc(x.label)}${hasOv(x,moneyMonth)?'<i class="chip ovc">この月だけ変更</i>':''}</b><span>毎月　タップでこの月の金額を変更</span></div><div class="mr"><em>${yen(amtFor(x,moneyMonth))}</em></div></li>`).join('')}</ul>`:'<div class="empty">この月の経費はまだありません。</div>'}</div>`; })():''}`+tools;
 }
@@ -3262,7 +3265,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29k';
+const APP_VER='2026.09.29l';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
