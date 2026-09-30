@@ -1179,6 +1179,8 @@ optgroup{font-weight:700;color:var(--sub)}
 .calrow{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:8px;background:transparent;color:var(--ink);padding:8px 10px;margin-bottom:6px;cursor:pointer}
 .calrow.z{border-left-color:var(--blue)}.calrow b{display:block;font-size:13.5px}.calrow span{font-size:12px;color:var(--sub)}
 @media (min-width:1024px){ .cd{min-height:104px}.cp{font-size:11.5px}.calwrapx{} }
+.cashbd{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:10px 12px;margin:10px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px}
+.cashbd>span{grid-column:1/-1;font-size:12px;color:var(--sub)}.cashbd div{display:flex;flex-direction:column}.cashbd i{font-style:normal;font-size:11px;color:var(--sub)}.cashbd b{font-family:var(--display);font-size:16px}
 </style>
 </head>
 <body>
@@ -2397,10 +2399,12 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
     <div class="mtools"><button class="btn sm primary" data-act="reportCopy">この集計を表でコピー</button></div>`+tools;
     return; }
   const bills=billsAll(), pays=paysAll(); const n=iso(today());
-  let inB, outP, sale, cost, taxIn;
+  let inB, outP, sale, cost, taxIn, cashPay=0, cashExp=0, cashNon=0;
   if(moneyMode==='work'){ inB=bills.filter(b=>b.bm===moneyMonth); outP=pays.filter(v=>v.bm===moneyMonth); sale=inB.reduce((a,b)=>a+b.rsale,0); cost=outP.reduce((a,v)=>a+v.ramt,0); taxIn=false; }
   else { inB=bills.filter(b=>b.due.slice(0,7)===moneyMonth); outP=pays.filter(v=>v.due.slice(0,7)===moneyMonth); sale=inB.reduce((a,b)=>a+b.rsale+tax(b.rsale),0);
-    const outX=expItems([moneyMonth]).reduce((a,i)=>a+(i.x.taxIncl?amtFor(i.x,i.bm):i.gross),0); cost=outP.reduce((a,v)=>a+v.ramt+tax(v.ramt),0)+outX; taxIn=true; }
+    const xi=expItems([moneyMonth]), amtX=i=>(i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross;
+    cashExp=xi.filter(i=>!NON_EXP.has(i.x.acct)).reduce((a,i)=>a+amtX(i),0); cashNon=xi.filter(i=>NON_EXP.has(i.x.acct)).reduce((a,i)=>a+amtX(i),0);
+    cashPay=outP.reduce((a,v)=>a+v.ramt+tax(v.ramt),0); cost=cashPay+cashExp+cashNon; taxIn=true; }
   const g=sale-cost, exp=expensesFor(moneyMonth);
   const billRow=b=>{ const late=b.status!=='入金済'&&n>b.due; return `<li class="mrow" data-act="moneyOpen" data-kind="bill" data-key="${esc(b.key)}"><div class="ml"><b>${esc(cname(b.client))}</b><span>${ymLabel(b.bm)}分${b.fixDue?'（個別の入金日）':''}　${b.orphan?'記録のみ':b.projects.length+'案件'}　入金予定 ${md(fromIso(b.due))}</span></div>
     <div class="mr"><em>${yen(b.rsale+(taxIn?tax(b.rsale):0))}</em><i class="chip ${BST[b.status]} ${late?'late':''}">${late?'入金遅れ':b.status}</i>${((S.bills||{})[b.key]||{}).files&&(S.bills[b.key].files||[]).length?'<i class="chip">請求書あり</i>':''}${b.changed?'<i class="chip late">請求後に変更あり</i>':''}</div></li>`; };
@@ -2410,14 +2414,15 @@ function renderMoney(){ const el=$('moneyBody'); if(!el) return;
   el.innerHTML=segP+nav+(gapPs.length?`<div class="sec"><h2 style="color:var(--purple)">お金に入っていない案件 <small>${gapPs.length}件</small></h2><ul class="mlist">${gapPs.map(p=>`<li class="mrow" data-act="projMoney" data-pid="${p.id}"><div class="ml"><b>${esc(p.name)}</b><span>${esc(moneyGaps(p).join('・'))}が未入力</span></div><div class="mr"><em>›</em></div></li>`).join('')}</ul></div>`:'')+`
   <div class="seg mmode"><button type="button" data-act="mMode" data-m="work" aria-pressed="${moneyMode==='work'}">粗利<small>稼働した月（月またぎは最終日の月）</small></button><button type="button" data-act="mMode" data-m="cash" aria-pressed="${moneyMode==='cash'}">資金繰り<small>お金が動く月</small></button></div>
   <div class="msum"><div><span>${moneyMode==='work'?'売上':'入ってくる'}</span><b>${yen(sale)}</b></div><div><span>${moneyMode==='work'?'支払':'出ていく'}</span><b>${yen(cost)}</b></div><div class="g"><span>${moneyMode==='work'?'粗利':'差し引き'}</span><b>${yen(g)}</b>${moneyMode==='work'?`<small>${pct1(g,sale)}%</small>`:''}</div></div>
-  <button class="mexp" data-act="expList"><span>経費</span><b>${yen(exp)}</b><small>税抜・${expItems([moneyMonth]).length}件</small>${moneyMode==='work'?`<span class="sep">利益（概算）</span><b class="pf">${yen(g-exp)}</b>`:''}<em>内訳を見る ›</em></button>
+  ${moneyMode==='work'?`<button class="mexp" data-act="expList"><span>経費</span><b>${yen(exp)}</b><small>税抜・${expItems([moneyMonth]).length}件</small><span class="sep">利益（概算）</span><b class="pf">${yen(g-exp)}</b><em>内訳を見る ›</em></button>`
+    :`<div class="cashbd"><span>出ていく ${yen(cost)} の内訳</span><div><i>手配先への支払い</i><b>${yen(cashPay)}</b></div><div><i>経費（給与・家賃など）</i><b>${yen(cashExp)}</b></div><div><i>借入金の返済など</i><b>${yen(cashNon)}</b></div></div>`}
   ${moneyMode==='work'?`<p class="hint">粗利は税抜きの金額です。自社の稼働（Luo）は支払いに含めていません。</p>`:'<p class="hint">資金繰りは消費税込みの金額です。「出ていく」には、手配先への支払いに加えて、経費と借入金の返済なども入っています。</p>'}
   <div class="sec msec"><h2>入ってくるお金 <small>元請けへの請求</small></h2>${inB.length?`<ul class="mlist">${inB.sort((a,b)=>a.due.localeCompare(b.due)).map(billRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}</div>
   ${moneyMode==='work'?`<details class="more mtax"><summary>この月の消費税（概算）　納める額の目安 ${yen(Math.max(0,taxFor([moneyMonth]).pay))}</summary>${taxBlock([moneyMonth],'')}</details>`:''}
   <div class="sec msec"><h2>出ていくお金 <small>手配先への支払い</small></h2>${outP.length?`<ul class="mlist">${outP.sort((a,b)=>a.due.localeCompare(b.due)).map(payRow).join('')}</ul>`:'<div class="empty">この月はありません。</div>'}
   ${moneyMode==='cash'?(()=>{ const xs=expItems([moneyMonth]).sort((a,b)=>String(a.date).localeCompare(String(b.date))); if(!xs.length) return '';
-    const tot=xs.reduce((a,i)=>a+(i.x.taxIncl?amtFor(i.x,i.bm):i.gross),0);
-    return `<h2 style="margin-top:14px">出ていくお金 <small>経費・返済など　${yen(tot)}</small></h2><ul class="mlist">${xs.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}</b><span>${i.one?md(fromIso(i.date)):'毎月'}　${esc(i.x.acct||'')}</span></div><div class="mr"><em>${yen(i.x.taxIncl?amtFor(i.x,i.bm):i.gross)}</em>${NON_EXP.has(i.x.acct)?'<i class="chip">経費外</i>':''}</div></li>`).join('')}</ul>`; })():''}</div>
+    const tot=xs.reduce((a,i)=>a+((i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross),0);
+    return `<h2 style="margin-top:14px">出ていくお金 <small>経費・返済など　${yen(tot)}</small></h2><ul class="mlist">${xs.map(i=>`<li class="mrow" data-act="${i.one?'expEdit':'expMonth'}" data-eid="${i.x.id}" data-bm="${i.bm}"><div class="ml"><b>${esc(i.x.label)}</b><span>${i.one?md(fromIso(i.date)):'毎月'}　${esc(i.x.acct||'')}</span></div><div class="mr"><em>${yen((i.x.taxIncl||isNoTax(i.x))?amtFor(i.x,i.bm):i.gross)}</em>${NON_EXP.has(i.x.acct)?'<i class="chip">経費外</i>':''}</div></li>`).join('')}</ul>`; })():''}</div>
   ${moneyMode==='work'?(()=>{ const one=(S.expenses||[]).filter(x=>!x.recurring&&x.start===moneyMonth).sort((a,b)=>(b.date||'').localeCompare(a.date||'')); const rec=(S.expenses||[]).filter(x=>x.recurring&&x.start<=moneyMonth&&(!x.end||x.end>=moneyMonth));
     return `<div class="sec"><h2>経費 <small>税抜 ${yen(exp)}　</small></h2>${one.length||rec.length?`<ul class="mlist">${one.map(x=>`<li class="mrow" data-act="expEdit" data-eid="${x.id}"><div class="ml"><b>${esc(x.label)}</b><span>${x.date?md(fromIso(x.date)):''}　${esc(x.acct||'')}${x.projectId&&P(x.projectId)?'　'+esc(short(P(x.projectId))):''}</span></div><div class="mr"><em>${yen(+x.amount)}</em></div></li>`).join('')}${rec.map(x=>`<li class="mrow" data-act="expMonth" data-eid="${x.id}" data-bm="${moneyMonth}"><div class="ml"><b>${esc(x.label)}${hasOv(x,moneyMonth)?'<i class="chip ovc">この月だけ変更</i>':''}</b><span>毎月　タップでこの月の金額を変更</span></div><div class="mr"><em>${yen(amtFor(x,moneyMonth))}</em></div></li>`).join('')}</ul>`:'<div class="empty">この月の経費はまだありません。</div>'}</div>`; })():''}`+tools;
 }
@@ -3448,7 +3453,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29p';
+const APP_VER='2026.09.29q';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
