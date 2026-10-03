@@ -3512,7 +3512,7 @@ function parseSessText(t){ const out=[]; const y=today().getFullYear(); const li
       const v=(m[5]||'').trim(); out.push({id:uid(),date:iso(d),end:e,venue:/未定/.test(v)?'':v,tbd:!v||/未定/.test(v),time:''}); }
     else if(tm&&out.length){ out[out.length-1].time=`${+tm[1]}:${tm[2]}〜${+tm[3]}:${tm[4]}`; } });
   return out; }
-function sessBlock(p){ if(!hasSess(p)) return `<button class="addslot" data-act="sessEdit" data-pid="${p.id}" data-sid="">＋ 現場（日程・場所）を分けて入れる</button>`;
+function sessBlock(p){ if(!hasSess(p)) return `<div style="display:flex"><button class="addslot" data-act="sessPaste" data-pid="${p.id}" style="flex:1">スケジュールを貼って現場を入れる</button><button class="addslot" data-act="sessEdit" data-pid="${p.id}" data-sid="" style="flex:1">＋ 現場を1つずつ入れる</button></div>`;
   return `<div class="slots sessbox"><div class="slh">現場・日程<span class="tot">${p.sessions.length}現場</span></div>
   ${p.sessions.map(x=>{ const sl=(p.slots||[]).filter(s=>s.sessionId===x.id); return `<div class="sline" data-act="sessEdit" data-pid="${p.id}" data-sid="${x.id}" role="button" tabindex="0">
     <div class="rn">${esc(x.end&&x.end>x.date?md(fromIso(x.date))+'〜'+md(fromIso(x.end)):md(fromIso(x.date)))}<small>${x.tbd||!x.venue?'<b class="tbd">場所未定</b>':esc(x.venue)}${x.time?'　'+esc(x.time):''}</small></div>
@@ -3578,7 +3578,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.10.03a';
+const APP_VER='2026.10.03b';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
