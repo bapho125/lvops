@@ -1113,12 +1113,12 @@ optgroup{font-weight:700;color:var(--sub)}
 .hmh{font-weight:700;font-size:13.5px;margin-bottom:6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.hmh small{font-weight:400;color:var(--sub);font-size:11.5px}
 .hmrow{display:grid;gap:6px 8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:8px;
   grid-template-columns:repeat(6,minmax(0,1fr)) 36px;
-  grid-template-areas:"role role role vend vend vend x" "need need days days unit unit unit" "hrs hrs hrs . . . ." "sell sell sell price price price price" "pname pname pname g g g g"}
+  grid-template-areas:"role role role vend vend vend x" "sess sess sess sess sess sess sess" "need need days days unit unit unit" "hrs hrs hrs . . . ." "sell sell sell price price price price" "pname pname pname g g g g"}
 .hmrow.me{grid-template-areas:"role role role vend vend vend x" "days days sell sell sell sell sell" "g g g g g g g"}
 .hmrow.ex{grid-template-areas:"role role role vend vend vend x" "sell sell sell price price price price" "g g g g g g g"}
 .hmrow .role{grid-area:role}.hmrow .vend{grid-area:vend}.hmrow .hmx{grid-area:x}.hmrow .a-need{grid-area:need}.hmrow .a-days{grid-area:days}
 .hmrow .hmu{grid-area:unit;margin:0;align-self:end;display:flex;flex-wrap:nowrap;gap:4px}.hmrow .hmu button{height:40px;flex:1;min-width:0;padding:0 6px}.hmrow .hrs{grid-area:hrs}
-.hmrow .a-sell{grid-area:sell}.hmrow .a-price{grid-area:price}.hmrow .hmp{grid-area:pname}.hmrow .hmg{grid-area:g;align-self:center}
+.hmrow .a-sess{grid-area:sess}.hmrow .a-sell{grid-area:sell}.hmrow .a-price{grid-area:price}.hmrow .hmp{grid-area:pname}.hmrow .hmg{grid-area:g;align-self:center}
 .hmc{display:flex;flex-direction:column;font-size:11px;color:var(--sub);gap:3px;min-width:0}
 .hmc[hidden]{display:none!important}
 .hmn::-webkit-outer-spin-button,.hmn::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.hmn{-moz-appearance:textfield}
@@ -1130,7 +1130,7 @@ optgroup{font-weight:700;color:var(--sub)}
 .hmp.ok{border-color:var(--teal);color:var(--teal)}
 .hmx{width:36px;height:40px;border:0;background:transparent;color:var(--sub);font-size:20px;cursor:pointer}
 @media (min-width:1024px){
-  .hmrow{grid-template-columns:minmax(130px,1.6fr) minmax(100px,1.2fr) 58px 58px 116px 70px 96px 96px minmax(104px,1fr) 80px 32px;grid-template-areas:"role vend need days unit hrs sell price g pname x"}
+  .hmrow{grid-template-columns:minmax(130px,1.6fr) minmax(100px,1.2fr) 58px 58px 116px 70px 96px 96px minmax(104px,1fr) 80px 32px;grid-template-areas:"role vend need days unit hrs sell price g pname x" "sess sess sess sess sess sess sess sess sess sess sess"}
   .hmtop{grid-template-columns:1fr 110px 200px 200px}.hmtop .wide{grid-column:auto}
   .hmrow.me{grid-template-columns:minmax(130px,1.6fr) minmax(160px,2fr) 58px 150px minmax(104px,1fr) 32px;grid-template-areas:"role vend days sell g x"}
   .hmrow.ex{grid-template-columns:minmax(160px,2fr) minmax(100px,1.2fr) 120px 120px minmax(104px,1fr) 32px;grid-template-areas:"role vend sell price g x"}
@@ -1181,6 +1181,17 @@ optgroup{font-weight:700;color:var(--sub)}
 @media (min-width:1024px){ .cd{min-height:104px}.cp{font-size:11.5px}.calwrapx{} }
 .cashbd{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:10px 12px;margin:10px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px}
 .cashbd>span{grid-column:1/-1;font-size:12px;color:var(--sub)}.cashbd div{display:flex;flex-direction:column}.cashbd i{font-style:normal;font-size:11px;color:var(--sub)}.cashbd b{font-family:var(--display);font-size:16px}
+
+.sessbox .tbd,.calrow .tbd{color:var(--purple)}.cp.tbd{background:color-mix(in oklab,var(--purple) 22%,transparent)}
+.gbar.g-show.g-tbd{background:color-mix(in oklab,var(--purple) 35%,transparent);color:var(--ink)}
+.sessbox .addslot{flex:1}
+.calrow .sessl{font-size:12px;color:var(--teal)}
+.dtl{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden}
+.dth{position:absolute;left:0;right:0;border-top:1px solid var(--line);height:44px}.dth span{position:absolute;left:6px;top:2px;font-size:10.5px;color:var(--sub);font-family:var(--display)}
+.dti{position:absolute;border:0;border-radius:6px;padding:3px 6px;font-size:11.5px;text-align:left;overflow:hidden;cursor:pointer;color:var(--ink);line-height:1.3}
+.dti.tk{background:color-mix(in oklab,var(--blue) 30%,var(--card));border-left:3px solid var(--blue)}
+.dti.pj{background:color-mix(in oklab,var(--teal) 25%,var(--card));border-left:3px solid var(--teal)}
+.dti b{font-family:var(--display)}
 </style>
 </head>
 <body>
@@ -1448,7 +1459,8 @@ function parse(t,ign){
   S.projects.forEach(p=>[p.name,...(p.alias||[])].forEach(a=>{ if(a && t.includes(a) && a.length>hit.length){ proj=p; hit=a; } }));
   if(!proj && typeof suggestProjects==='function'){ const sg=suggestProjects(t,2); if(sg[0]&&sg[0].sc>=6&&(!sg[1]||sg[0].sc>=sg[1].sc*1.5)){ proj=sg[0].p; hit=sg[0].hit&&t.includes(sg[0].hit)?sg[0].hit:''; } }
   const wm=t.match(/返事待ち|返信待ち|回答待ち/);
-  return {due:(due&&!ign.date)?iso(due):null, rawDue:due?iso(due):null, dword, proj:ign.proj?null:proj, rawProj:proj, hit, wait:!!wm&&!ign.wait, rawWait:!!wm};
+  const tm=ign.time?null:parseTime(t.replace(/(\d{1,2})[\/月](\d{1,2})日?/,''));
+  return {time:tm?tm.time:'',endTime:tm?tm.endTime:'',tword:tm?tm.src:'',due:(due&&!ign.date)?iso(due):null, rawDue:due?iso(due):null, dword, proj:ign.proj?null:proj, rawProj:proj, hit, wait:!!wm&&!ign.wait, rawWait:!!wm};
 }
 function splitParts(v){ return v.split(/\n|／/).map(s=>s.trim()).filter(Boolean); }
 
@@ -1469,6 +1481,7 @@ function preview(){
   const parts=splitParts(v);
   const r=parse(parts[0],ign); let h='';
   if(r.rawDue) h+=`<button type="button" data-ign="date" class="${ign.date?'off':''}">期日 ${dueLabel(r.rawDue)}<s>${ign.date?'戻す':'×'}</s></button>`;
+  if(r.time||ign.time){ const tm=parseTime(parts[0].replace(/(\d{1,2})[\/月](\d{1,2})日?/,'')); if(tm) h+=`<button type="button" data-ign="time" class="${ign.time?'off':''}">時刻 ${tm.time}${tm.endTime?'〜'+tm.endTime:''}<s>${ign.time?'戻す':'×'}</s></button>`; }
   if(r.rawProj) h+=`<button type="button" data-ign="proj" class="${ign.proj?'off':''}">${esc(short(r.rawProj))}<s>${ign.proj?'戻す':'×'}</s></button>`;
   if(r.rawWait) h+=`<button type="button" data-ign="wait" class="${ign.wait?'off':''}">返事待ち<s>${ign.wait?'戻す':'×'}</s></button>`;
   if(/至急|緊急|絶対|激やば|!!|！！/.test(parts[0])) h+=`<span class="fbadge">至急</span>`;
@@ -1525,7 +1538,7 @@ function submitCap(){
   const parts=splitParts(v); const now=Date.now(); let ctxProj=null, made=[];
   parts.forEach((part,i)=>{ const r=parse(part,i===0?ign:{}); const proj=r.proj||(i>0?ctxProj:null); if(r.proj) ctxProj=r.proj;
     const status=r.wait?'wait':(r.due&&proj?'todo':'inbox');
-    const k=mkTask({title:part,raw:v,source:src,projectId:proj?proj.id:null,due:r.due,status,createdAt:now,waitingSince:r.wait?now:null,fatal:/至急|緊急|絶対|激やば|!!|！！/.test(part)});
+    const k=mkTask({title:part,raw:v,source:src,projectId:proj?proj.id:null,due:r.due||(r.time?iso(today()):null),time:r.time||'',endTime:r.endTime||'',status,createdAt:now,waitingSince:r.wait?now:null,fatal:/至急|緊急|絶対|激やば|!!|！！/.test(part)});
     S.tasks.unshift(k); made.push(k); });
   save(); capIn.value=''; ign={}; grow(); preview();
   src='手入力'; [...$('srcRow').querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed',x.dataset.src==='手入力'?'true':'false'));
@@ -1542,13 +1555,13 @@ if(window.visualViewport){ visualViewport.addEventListener('resize',placeDock); 
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
 function metaHtml(k){ const p=P(k.projectId); let dcls='';
   if(k.due){ const n=dd(fromIso(k.due),today()); dcls=(n<0&&k.status!=='done')?'late':(n===0?'today':''); }
-  return `${p?`<span class="proj">${esc(short(p))}</span>`:''}${k.due?`<span class="${dcls}">${dueLabel(k.due)}</span>`:''}${k.status==='wait'?'<span class="wt">返事待ち</span>':''}${k.status==='doing'?'<span>進行中</span>':''}${k.tag==='圧縮'?'<span class="cmp">圧縮</span>':''}${k.source!=='手入力'?`<span>${esc(k.source)}</span>`:''}${k.owner!=='中村'?`<span>${esc(k.owner)}</span>`:''}`; }
+  return `${p?`<span class="proj">${esc(short(p))}</span>`:''}${k.due?`<span class="${dcls}">${dueLabel(k.due)}${k.time?' '+esc(k.time)+(k.endTime?'〜'+esc(k.endTime):''):''}</span>`:''}${k.status==='wait'?'<span class="wt">返事待ち</span>':''}${k.status==='doing'?'<span>進行中</span>':''}${k.tag==='圧縮'?'<span class="cmp">圧縮</span>':''}${k.source!=='手入力'?`<span>${esc(k.source)}</span>`:''}${k.owner!=='中村'?`<span>${esc(k.owner)}</span>`:''}`; }
 function row(k){ const iss=issues(k); const fa=fatalOf(k);
   return `<li class="task ${k.status==='done'?'done':''} ${iss.length?'issue':''} ${fa?'fatal':''}" data-id="${k.id}">
     <div class="under"><span class="r">完了</span><span class="l">明日へ</span></div>
     <div class="face"><button class="check" data-act="toggle" aria-label="${k.status==='done'?'未完了に戻す':'完了にする'}">${CHECK}</button>
     <div class="tbody" data-act="open" role="button" tabindex="0"><div class="ttl">${fa?'<span class="fbadge">至急</span>':''}${esc(k.title)}</div>
-    <div class="meta">${metaHtml(k)}${k.tag==='前確'&&k.status!=='done'&&k.projectId?`<button class="minibtn" data-act="zen" data-pid="${k.projectId}">前確を作る</button>`:''}${k.tag==='振り返り'&&k.status!=='done'&&k.projectId?`<button class="minibtn" data-act="know" data-pid="${k.projectId}">振り返りを書く</button><button class="minibtn" data-act="reviewSkip" data-id="${k.id}">今回はなし</button>`:''}</div>${fa?`<div class="fwhy">${esc(fa)}</div>`:''}${iss.length?`<div class="iss">${iss.join('／')}${k.status==='wait'&&iss.some(x=>/返事待ち/.test(x))?'<button class="minibtn" data-act="msg" data-type="催促">催促文</button>':(/催促|確認|依頼|連絡|お願い/.test(k.title)?'<button class="minibtn" data-act="msg" data-type="">連絡文</button>':'')}</div>`:''}</div></div></li>`; }
+    <div class="meta">${metaHtml(k)}${k.tag==='前確'&&k.status!=='done'&&k.projectId?`<button class="minibtn" data-act="zen" data-pid="${k.projectId}" data-sid="${(k.raw||'').split('#')[1]||''}">前確を作る</button>`:''}${k.tag==='振り返り'&&k.status!=='done'&&k.projectId?`<button class="minibtn" data-act="know" data-pid="${k.projectId}">振り返りを書く</button><button class="minibtn" data-act="reviewSkip" data-id="${k.id}">今回はなし</button>`:''}</div>${fa?`<div class="fwhy">${esc(fa)}</div>`:''}${iss.length?`<div class="iss">${iss.join('／')}${k.status==='wait'&&iss.some(x=>/返事待ち/.test(x))?'<button class="minibtn" data-act="msg" data-type="催促">催促文</button>':(/催促|確認|依頼|連絡|お願い/.test(k.title)?'<button class="minibtn" data-act="msg" data-type="">連絡文</button>':'')}</div>`:''}</div></div></li>`; }
 const list=arr=>`<ul class="tasks">${arr.map(row).join('')}</ul>`;
 const byDue=(a,b)=>(a.due||'9999').localeCompare(b.due||'9999');
 
@@ -1605,7 +1618,7 @@ $('plan').addEventListener('click',e=>{ const b=e.target.closest('[data-jump]');
  * ・先月に終わった案件は、月初の数日（設定で変更・初期5日）は表示
  * ・さらに、請求がまだの案件は、請求書を送るまで表示し続ける（出し忘れ防止）
  */
-function projEnd(p){ if(p.endDate) return p.endDate; const s0=fromIso(p.showDate); const m=(p.dateText||'').match(/〜\s*(\d{1,2})\/(\d{1,2})/);
+function projEnd(p){ if(hasSess(p)) return p.sessions.map(sessEnd).sort().slice(-1)[0]; if(p.endDate) return p.endDate; const s0=fromIso(p.showDate); const m=(p.dateText||'').match(/〜\s*(\d{1,2})\/(\d{1,2})/);
   if(!m) return p.showDate; let y=s0.getFullYear(); if(+m[1]<s0.getMonth()+1) y++; return iso(new Date(y,+m[1]-1,+m[2])); }
 function graceDays(){ const g=(S.settings||{}).graceDays; return g===undefined||g===null||g===''?5:+g; }
 function hasBill(p){ return !!(projMoney(p).sale&&clientOf(p)); }
@@ -1657,14 +1670,15 @@ function renderTime(){
       const bars=[];
       // 準備：スタッフの手配があるときだけ、案件を入れた日から本番の前日まで。手配が埋まったら消える
       if(hasHai(p)&&!filledAll(p)&&!tag){ const c0=p.createdAt?iso(new Date(+p.createdAt)):n; bars.push(bar(idx(c0<p.showDate?c0:iso(add(fromIso(p.showDate),-1))),showA-1,'g-prep','準備（手配中 '+haiSlots(p).reduce((a,x)=>a+Math.min(filledN(x),+x.need||0),0)+'/'+haiSlots(p).reduce((a,x)=>a+(+x.need||0),0)+'名）',`data-act="gotoProj" data-pid="${p.id}"`)); }
-      bars.push(bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`));
+      if(hasSess(p)) p.sessions.forEach(x=>bars.push(bar(idx(x.date),idx(sessEnd(x)),'g-show'+(x.tbd||!x.venue?' g-tbd':''),x.venue||'場所未定',`data-act="gotoProj" data-pid="${p.id}"`)));
+      else bars.push(bar(showA,showB,'g-show','本番',`data-act="gotoProj" data-pid="${p.id}"`));
       const c=clientOf(p), st=c?(((S.bills||{})[billKeyOf(p)]||{})):{};
       const billed=st.status&&st.status!=='未請求', billEnd=billed?(st.dates&&st.dates['請求済']?idx(st.dates['請求済']):showB+1):Math.max(showB+1,idx(n));
       if(projMoney(p).sale>0&&!(billed&&billEnd<=showB)) bars.push(bar(showB+1,billEnd,billed?'g-bill g-done':'g-bill','請求'+(billed?'済':'まだ'),`data-act="moneyFor" data-pid="${p.id}"`));
       // 前確：送る日に印
-      let zenI=-1, zenCls='';
-      if(needsZen(p)&&!tag){ zenI=idx(zenDate(p)); const zk=S.tasks.find(k=>k.projectId===p.id&&k.tag==='前確'); zenCls=zk&&zk.status==='done'?'done':(zenDate(p)<n?'late':''); }
-      const zenMark=i=>i===zenI?`<button type="button" class="gzen ${zenCls}" data-act="zen" data-pid="${p.id}" title="前確を送る日">前確${zenCls==='done'?' ✓':''}</button>`:'';
+      const zens={};
+      if(needsZen(p)&&!tag){ (hasSess(p)?p.sessions.map(x=>({sid:x.id,d:zenDate({showDate:x.date}),raw:'自動：前日確認#'+x.id})):[{sid:'',d:zenDate(p),raw:''}]).forEach(z=>{ const zk=S.tasks.find(k=>k.projectId===p.id&&k.tag==='前確'&&(!z.raw||k.raw===z.raw)); zens[idx(z.d)]={sid:z.sid,cls:zk&&zk.status==='done'?'done':(z.d<n?'late':'')}; }); }
+      const zenMark=i=>zens[i]?`<button type="button" class="gzen ${zens[i].cls}" data-act="zen" data-pid="${p.id}" data-sid="${zens[i].sid}" title="前確を送る日">前確${zens[i].cls==='done'?' ✓':''}</button>`:'';
       return cellRow(`<button type="button" class="labbtn" data-act="gotoProj" data-pid="${p.id}">${esc(short(p))}<small>${tag?`<span class="${/請求/.test(tag)?'bp':''}">${tag}</span>`:(sd<=0?'本番中':'本番 D-'+sd)}</small></button>`,i=>bars.map(f=>f(i)).join('')+zenMark(i),tag?'ended':''); };
     const live=ps.filter(p=>!endedTag(p)).sort((a,b)=>a.showDate.localeCompare(b.showDate)), done=ps.filter(p=>endedTag(p)).sort((a,b)=>projEnd(b).localeCompare(projEnd(a)));
     const gSelf=live.filter(hasSelfW), gHai=live.filter(p=>!hasSelfW(p)&&hasHai(p)), gOther=live.filter(p=>!hasSelfW(p)&&!hasHai(p));
@@ -1733,7 +1747,7 @@ function renderProjects(){
         return `<button class="pmoney" data-act="projMoney" data-pid="${p.id}"><span>売上<b>${yen(m.sale)}</b></span><span>支払<b>${yen(m.cost)}</b></span><span class="g">粗利<b>${yen(m.gross)}</b><small>${m.sale?Math.round(m.gross/m.sale*1000)/10:0}%</small></span><em>${esc(cname(c))}　›</em></button>`; })()}
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="stats"><div>残り <b>${open.length}</b></div><div>返事待ち <b>${wait}</b></div><div class="${bad?'bad':''}">要対応 <b>${bad}</b></div><div>完了 <b>${ts.length-open.length}</b></div></div>
-      ${slotsBlock(p)}
+      ${p.kind==='long'?'':sessBlock(p)}${slotsBlock(p)}
       <div style="height:12px"></div>
       ${open.length?listGrouped(open.sort(byDue),'card'):'<div class="empty">残っているタスクはありません。</div>'}
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="editProj" data-pid="${p.id}">案件を編集</button>${(p.modules||[]).length?`<button class="btn sm" data-act="applyTpl" data-pid="${p.id}">逆算タスクを追加</button>`:''}</div></div>`; }).join('')
@@ -1774,7 +1788,9 @@ document.addEventListener('click',e=>{
   if(act==='remind'){ const p=P(a.dataset.pid), s=p&&(p.slots||[]).find(x=>x.id===a.dataset.sid); if(s) openCopy(`${s.role}の催促文（${s.vendor||'手配先'}あて）`,remindText(p,s),'LINEやメールにそのまま貼れます。'); }
   if(act==='names') openNames(a.dataset.pid);
   if(act==='quote') openQuote(a.dataset.pid);
-  if(act==='zen') openZen(a.dataset.pid);
+  if(act==='zen') openZen(a.dataset.pid,a.dataset.sid);
+  if(act==='sessEdit'){ openSessEdit(a.dataset.pid,a.dataset.sid); return; }
+  if(act==='sessPaste'){ openSessPaste(a.dataset.pid); return; }
   if(act==='taskMore'){ const k=a.dataset.k; if(taskOpen.has(k)) taskOpen.delete(k); else taskOpen.add(k); render(); return; }
   if(act==='selfEdit') openSelf(a.dataset.pid,a.dataset.sid);
   if(act==='reviewSkip'){ const k=T(a.dataset.id); if(k){ snap(); const pj=P(k.projectId); if(pj){ pj.review=Object.assign({},pj.review||{},{skip:true}); } S.tasks=S.tasks.filter(x=>x.id!==k.id); save(); render(); toast('この案件の振り返りはなしにしました',true); } }
@@ -1878,6 +1894,7 @@ function openTask(id){ const k=T(id); if(!k) return; closeSheet();
   openSheet(`<h3>タスクを整理</h3>
   <div class="fld"><label for="f-title">内容</label><textarea id="f-title">${esc(k.title)}</textarea></div>
   <div class="fld"><label for="f-proj">案件</label><select id="f-proj">${projOptions(k.projectId)}</select></div>
+  <div class="row2"><div class="fld"><label for="f-time">時刻（打ち合わせなど）</label><input id="f-time" type="time" value="${esc(k.time||'')}"></div><div class="fld"><label for="f-etime">終わり</label><input id="f-etime" type="time" value="${esc(k.endTime||'')}"></div></div>
   <div class="fld"><label for="f-start">始める日（予定のタスク表示で、始める日から期日までを棒で表示します）</label><input id="f-start" type="date" value="${k.start||''}"></div>
   <div class="fld"><span class="lb">期日</span><div class="seg" id="f-q">${q.map(([l,v])=>`<button type="button" data-v="${v}" aria-pressed="${(k.due||'')===v}">${l}</button>`).join('')}</div>
     <input id="f-due" type="date" value="${k.due||''}" style="margin-top:8px" aria-label="期日を日付で選ぶ"></div>
@@ -1899,7 +1916,7 @@ function openTask(id){ const k=T(id); if(!k) return; closeSheet();
   $('f-msg').onclick=()=>openMsg(id);
   $('f-fatal').onclick=()=>{ snap(); k.fatal=!k.fatal; save(); closeSheet(); render(); toast(k.fatal?'至急にしました。今日の画面の一番上に出ます':'至急を外しました',true); };
   $('f-del').onclick=()=>{ snap(); S.tasks=S.tasks.filter(x=>x.id!==id); save(); closeSheet(); render(); toast('削除しました',true); };
-  $('f-save').onclick=()=>{ snap(); k.title=$('f-title').value.trim()||k.title; k.projectId=$('f-proj').value||null; k.due=$('f-due').value||null; k.start=$('f-start').value||'';
+  $('f-save').onclick=()=>{ snap(); k.title=$('f-title').value.trim()||k.title; k.projectId=$('f-proj').value||null; k.due=$('f-due').value||null; k.start=$('f-start').value||''; k.time=$('f-time').value||''; k.endTime=$('f-etime').value||''; if(k.time&&!k.due) k.due=iso(today());
     if(k.start&&k.due&&k.start>k.due) k.start=k.due;
     k.owner=$('f-owner').value; k.source=$('f-src').value; k.note=$('f-note').value;
     let target=st; if(target==='inbox' && k.status==='inbox' && k.projectId && k.due) target='todo';
@@ -2661,6 +2678,7 @@ function openHaiMoney(pid,focus){ const p=P(pid); if(!p) return; p.slots=p.slots
     return `<div class="hmrow" data-kind="slot" data-id="${s.id}">
     <input class="hmt role" data-f="role" value="${esc(s.role)}" placeholder="職種" aria-label="職種">
     <input class="hmt vend" data-f="vendor" value="${esc(s.vendor||'')}" placeholder="手配先" list="hmv" aria-label="手配先">
+    ${hasSess(p)?`<label class="hmc a-sess">現場<select class="hmt" data-f="sessionId"><option value="">全日程</option>${p.sessions.map(x=>`<option value="${x.id}" ${s.sessionId===x.id?'selected':''}>${esc(sessLabel(x))}</option>`).join('')}</select></label>`:''}
     <label class="hmc a-need">人数${num('need',s.need,'1')}</label><label class="hmc a-days">日数${num('days',s.days||1,'1')}</label>
     <div class="hmu seg sm"><button type="button" data-u="日給" aria-pressed="${s.unit!=='時給'}">日給</button><button type="button" data-u="時給" aria-pressed="${s.unit==='時給'}">時給</button></div>
     <label class="hmc hrs" ${s.unit==='時給'?'':'hidden'}>1日の時間${num('hours',s.hours||8,'8')}</label>
@@ -2707,6 +2725,7 @@ function openHaiMoney(pid,focus){ const p=P(pid); if(!p) return; p.slots=p.slots
       g.textContent=(+o.sell&&+o.price)?`粗利 ${yen((+o.sell-+o.price)*hr*(+o.need||0)*d)}`:(+o.sell||+o.price?'片方が空です':'—'); g.classList.toggle('neg',+o.sell&&+o.price&&+o.sell<+o.price); }); };
   paint();
   const box=$('sheet');
+  box.addEventListener('change',e=>{ const el=e.target; if(el.dataset.f!=='sessionId') return; const r=el.closest('.hmrow'), o=find(r); if(o){ o.sessionId=el.value; hmSave(); } });
   box.addEventListener('input',e=>{ const el=e.target, r=el.closest('.hmrow'); if(!r||!el.dataset.f) return; const o=find(r); if(!o) return; const f=el.dataset.f;
     if(f==='who'){ o.people=el.value.split(/[、,，]+/).map(x=>x.trim()).filter(Boolean).map(n=>({name:n})); o.need=Math.max(1,o.people.length); }
     else if(['need','days','hours'].includes(f)) o[f]=el.value===''?'':+el.value;
@@ -3002,14 +3021,27 @@ const zenMissing=p=>ZEN_FIELDS.filter(([k])=>!String(p[k]||'').trim()).map(([,l]
 /* 前確タスクを自動で置く・日付を合わせる（renderのたびに呼ぶ。変化があったときだけ保存） */
 function zenLead(){ const v=(S.settings||{}).zenLead; return v===undefined||v===null||v===''?5:+v; }
 function ensureZenTasks(){ let ch=false; const n=iso(today());
-  S.projects.forEach(p=>{ if(!needsZen(p)||p.showDate<n) return; const due=zenDate(p);
+  S.projects.forEach(p=>{ if(!needsZen(p)||!hasSess(p)) return;
+    const k0=S.tasks.find(t=>t.projectId===p.id&&t.tag==='前確'&&t.raw==='自動：前日確認'&&t.status!=='done'); if(k0){ S.tasks=S.tasks.filter(t=>t!==k0); ch=true; }
+    p.sessions.forEach(x=>{ if(x.date<n) return; const due=zenDate({showDate:x.date}), key='自動：前日確認#'+x.id; let k=S.tasks.find(t=>t.projectId===p.id&&t.tag==='前確'&&t.raw===key);
+      if(dd(fromIso(due),today())>zenLead()){ if(k&&k.status!=='done'){ S.tasks=S.tasks.filter(t=>t!==k); ch=true; } return; }
+      const title=`前確を送る（${md(fromIso(x.date))} ${x.venue||'場所未定'}）`;
+      if(!k){ S.tasks.push(mkTask({title,raw:key,source:'自動',projectId:p.id,due,status:'todo',createdAt:Date.now(),tag:'前確'})); ch=true; }
+      else if(k.status!=='done'&&(k.due!==due||k.title!==title)){ k.due=due; k.title=title; ch=true; } }); });
+  S.projects.forEach(p=>{ if(!needsZen(p)||hasSess(p)||p.showDate<n) return; const due=zenDate(p);
     let k=S.tasks.find(t=>t.projectId===p.id&&t.tag==='前確');
     if(dd(fromIso(due),today())>zenLead()){ if(k&&k.status!=='done'&&k.source==='自動'){ S.tasks=S.tasks.filter(t=>t!==k); ch=true; } return; } // まだ先の前確はタスクに出さない
     if(!k){ S.tasks.push(mkTask({title:'前確を送る（集合・会場・服装・連絡先）',raw:'自動：前日確認',source:'自動',projectId:p.id,due,status:'todo',createdAt:Date.now(),tag:'前確'})); ch=true; }
     else if(k.status!=='done'&&k.due!==due){ k.due=due; ch=true; } });
   if(ch) save(); }
 function zenAlerts(){ const out=[], t=today();
-  S.projects.forEach(p=>{ if(!needsZen(p)) return; const sd=dd(fromIso(p.showDate),t); if(sd<0) return;
+  S.projects.forEach(p=>{ if(!needsZen(p)||!hasSess(p)) return; p.sessions.forEach(x=>{ const sd=dd(fromIso(x.date),t); if(sd<0) return;
+    const k=S.tasks.find(y=>y.projectId===p.id&&y.tag==='前確'&&y.raw==='自動：前日確認#'+x.id); if(k&&k.status==='done') return;
+    const pp=zenView(p,x), zd=dd(fromIso(zenDate({showDate:x.date})),t), miss=zenMissing(pp), nm=`${short(p)}（${md(fromIso(x.date))}${x.venue?' '+x.venue:''}）`;
+    if(zd<0&&sd<=1) out.push({lv:'fatal',p,sid:x.id,title:`${nm}の前確がまだです（本番${sd===0?'は今日':'は明日'}）`,miss});
+    else if(zd===0) out.push({lv:miss.length?'fatal':'crit',p,sid:x.id,title:`今日は${nm}の前確を送る日です`,miss});
+    else if(zd>0&&zd<=3&&miss.length) out.push({lv:'crit',p,sid:x.id,title:`${nm}の前確（${md(fromIso(zenDate({showDate:x.date})))}送信）に必要な情報が足りません`,miss}); }); });
+  S.projects.forEach(p=>{ if(!needsZen(p)||hasSess(p)) return; const sd=dd(fromIso(p.showDate),t); if(sd<0) return;
     const k=S.tasks.find(x=>x.projectId===p.id&&x.tag==='前確'); if(k&&k.status==='done') return;
     const zd=dd(fromIso(zenDate(p)),t), miss=zenMissing(p);
     if(zd<0&&sd<=1) out.push({lv:'fatal',p,title:`${short(p)}の前確がまだです（本番${sd===0?'は今日':'は明日'}）`,miss});
@@ -3018,7 +3050,7 @@ function zenAlerts(){ const out=[], t=today();
   return out; }
 function zenLi(a){ return `<li class="salert ${a.lv}"><div class="top"><b>前確</b><span>${esc(a.title)}</span></div>
   ${a.miss.length?`<div class="why">足りない：${esc(a.miss.join('・'))}</div>`:''}
-  <div class="acts2"><button class="btn sm ${a.lv==='fatal'?'fatalbtn':'primary'}" data-act="zen" data-pid="${a.p.id}">前確を作る</button>${a.miss.length?`<button class="btn sm" data-act="zenAsk" data-pid="${a.p.id}">元請けに確認する文</button>`:''}</div></li>`; }
+  <div class="acts2"><button class="btn sm ${a.lv==='fatal'?'fatalbtn':'primary'}" data-act="zen" data-pid="${a.p.id}" data-sid="${a.sid||''}">前確を作る</button>${a.miss.length?`<button class="btn sm" data-act="zenAsk" data-pid="${a.p.id}">元請けに確認する文</button>`:''}</div></li>`; }
 function zenText(p,vendor,opt){ const sdt=fromIso(p.showDate);
   const people=[]; (p.slots||[]).forEach(s=>{ if(vendor&&vendor!=='全員'&&(s.vendor||'手配先未定')!==vendor) return; const ns=(s.people||[]).map(x=>x.name).filter(Boolean); if(ns.length) people.push(`${s.role}：${ns.join('、')}`); });
   const B=[]; const sec=(h,v)=>{ const t=String(v||'').trim(); if(t) B.push(`◆${h}\n${t}`); };
@@ -3034,12 +3066,17 @@ function zenText(p,vendor,opt){ const sdt=fromIso(p.showDate);
 const ZEN_SNIPS=[['代表者から連絡','集合場所へ到着されましたら\n下記の集合担当へ電話をして合流してください。\n代表の方1名からご連絡をお願いいたします。\nまた、集合担当の連絡先は代表の方にのみ展開をお願いいたします。','arrival'],
   ['熱中症対策','★熱中症対策として以下持参可能です。\n帽子（黒のみ）、冷感タオル（シンプルなもののみ）、涼感スプレー、日焼け止め、ネッククーラー（シンプルなもののみ）\n※自己管理となりますので、紛失などにはお気を付けください。\n※現場で急遽使用制限が出る可能性がありますので、その場合は現場担当者の指示に従ってください。','caution'],
   ['貴重品は自己管理','※貴重品は各自で保管お願いします。\n紛失、盗難については弊社では責任を負うことができません。','zenNote']];
-function openZen(pid){ const p=P(pid); if(!p) return; const vs=['全員',...new Set((p.slots||[]).filter(x=>!isSelfSlot(x)).map(s=>s.vendor||'手配先未定'))];
+const SESS_KEYS={venue:'venue',workTime:'time',callTime:'callTime',callPlace:'callPlace',contact:'contact'};
+function zenView(p,x){ if(!x) return p; return Object.assign({},p,{showDate:x.date,dateText:x.end&&x.end>x.date?md(fromIso(x.date))+'〜'+md(fromIso(x.end)):md(fromIso(x.date)),venue:x.venue||'',workTime:x.time||p.workTime||'',callTime:x.callTime||p.callTime||'',callPlace:x.callPlace||p.callPlace||'',contact:x.contact||p.contact||'',slots:(p.slots||[]).filter(s=>!s.sessionId||s.sessionId===x.id)}); }
+function openZen(pid,sid){ const p0=P(pid); if(!p0) return;
+  if(hasSess(p0)&&!sid){ const n=iso(today()); const nx=p0.sessions.find(x=>x.date>=n)||p0.sessions[p0.sessions.length-1]; sid=nx.id; }
+  const sx=sid&&hasSess(p0)?p0.sessions.find(x=>x.id===sid):null; const p=zenView(p0,sx); const vs=['全員',...new Set((p.slots||[]).filter(x=>!isSelfSlot(x)).map(s=>s.vendor||'手配先未定'))];
   let st={v:'全員',members:true,head:true}; const miss=zenMissing(p);
   const prev=S.projects.filter(q=>q.id!==p.id&&q.clientId&&q.clientId===p.clientId&&(q.arrival||q.items||q.caution||q.bring)).sort((a,b)=>b.showDate.localeCompare(a.showDate))[0];
   const ta=(k,l,ph,h)=>`<div class="fld"><label>${l}</label><textarea data-zf="${k}" style="min-height:${h||54}px" placeholder="${esc(ph||'')}">${esc(p[k]||'')}</textarea></div>`;
   const inp=(k,l,ph)=>`<div class="fld"><label>${l}</label><input data-zf="${k}" value="${esc(p[k]||'')}" placeholder="${esc(ph||'')}"></div>`;
-  openSheet(`<h3>前確　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(short(p))}</span></h3>
+  openSheet(`<h3>前確　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(short(p))}${sx?'　'+esc(sessLabel(sx)):''}</span></h3>
+  ${hasSess(p0)?`<div class="seg" id="z-sess" style="margin-bottom:10px">${p0.sessions.map(x=>`<button type="button" data-sid="${x.id}" aria-pressed="${sx&&x.id===sx.id}">${esc(md(fromIso(x.date)))}${x.venue?' '+esc(x.venue.slice(0,8)):' 未定'}</button>`).join('')}</div>`:''}
   <p class="hint" style="margin-top:0">送る日：<b>${md(fromIso(zenDate(p)))}</b>（本番 ${md(fromIso(p.showDate))}${isBizDay(add(fromIso(p.showDate),-1))?'の前日':'。前日が土日祝のため、その前の平日'}）</p>
   ${miss.length?`<div class="chk" style="display:block;border-color:var(--purple)"><b style="color:var(--purple)">足りない情報：${esc(miss.join('・'))}</b><small style="margin-top:4px">下の欄に入れると案件に保存されます。元請けに聞く必要があれば「元請けに確認する文」を使ってください。</small></div>`:''}
   ${prev?`<button type="button" class="btn sm" id="z-prev" style="margin-bottom:10px">前回（${esc(short(prev))}）の集合の流れ・持ち物・注意事項を使う</button>`:''}
@@ -3057,15 +3094,17 @@ function openZen(pid){ const p=P(pid); if(!p) return; const vs=['全員',...new 
   <textarea class="copyarea" id="zt" style="min-height:260px"></textarea>
   <div class="acts" style="flex-wrap:wrap;gap:8px"><button class="btn" id="z-close">閉じる</button><div style="display:flex;gap:8px"><button class="btn" id="z-copy">コピー</button><button class="btn primary" id="z-done">コピーして送った</button></div></div>`);
   const paint=()=>{ $('zt').value=zenText(p,st.v,{members:st.members,head:st.head}); }; paint();
-  const bind=()=>{ $('sheet').querySelectorAll('[data-zf]').forEach(el=>{ el.oninput=()=>{ p[el.dataset.zf]=el.value; paint(); }; el.onchange=()=>save(); }); }; bind();
-  if($('z-prev')) $('z-prev').onclick=()=>{ ['arrival','items','caution','bring','zenNote'].forEach(k=>{ if(!String(p[k]||'').trim()&&prev[k]){ p[k]=prev[k]; const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=prev[k]; } }); save(); paint(); toast('前回の内容を入れました（空いていた欄だけ）'); };
-  $('z-snip').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const [,txt,k]=ZEN_SNIPS[+b.dataset.i]; p[k]=(String(p[k]||'').trim()?p[k]+'\n':'')+txt; const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=p[k]; save(); paint(); });
+  const setF=(k,v)=>{ p[k]=v; if(sx&&SESS_KEYS[k]) sx[SESS_KEYS[k]]=v; else p0[k]=v; if(sx&&k==='venue') sx.tbd=!v; };
+  const bind=()=>{ $('sheet').querySelectorAll('[data-zf]').forEach(el=>{ el.oninput=()=>{ setF(el.dataset.zf,el.value); paint(); }; el.onchange=()=>save(); }); }; bind();
+  if($('z-prev')) $('z-prev').onclick=()=>{ ['arrival','items','caution','bring','zenNote'].forEach(k=>{ if(!String(p[k]||'').trim()&&prev[k]){ setF(k,prev[k]); const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=prev[k]; } }); save(); paint(); toast('前回の内容を入れました（空いていた欄だけ）'); };
+  $('z-snip').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const [,txt,k]=ZEN_SNIPS[+b.dataset.i]; setF(k,(String(p[k]||'').trim()?p[k]+'\n':'')+txt); const el=$('sheet').querySelector(`[data-zf="${k}"]`); if(el) el.value=p[k]; save(); paint(); });
   if($('zv')) $('zv').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; st.v=b.dataset.v; [...$('zv').children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); paint(); });
   $('zm').onchange=e=>{ st.members=e.target.checked; paint(); };
   $('zh').onchange=e=>{ st.head=e.target.checked; paint(); };
+  if($('z-sess')) $('z-sess').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; save(); openZen(p0.id,b.dataset.sid); });
   $('z-close').onclick=()=>{ save(); closeSheet(); render(); };
   $('z-copy').onclick=async()=>toast(await copyText($('zt').value,$('zt'))?'コピーしました':'コピーできませんでした');
-  $('z-done').onclick=async()=>{ await copyText($('zt').value,$('zt')); snap(); const k=S.tasks.find(t=>t.projectId===p.id&&t.tag==='前確'); if(k) setStatus(k,'done'); save(); closeSheet(); render(); toast('コピーしました。前確を「送った」にしました',true); }; }
+  $('z-done').onclick=async()=>{ await copyText($('zt').value,$('zt')); snap(); const k=S.tasks.find(t=>t.projectId===p0.id&&t.tag==='前確'&&(!sx||t.raw==='自動：前日確認#'+sx.id)); if(k) setStatus(k,'done'); save(); closeSheet(); render(); toast('コピーしました。前確を「送った」にしました',true); }; }
 
 function openZenAsk(pid){ const p=P(pid); if(!p) return; const miss=zenMissing(p); const co=company();
   const t=`お疲れさまです。${co.name.replace(/^株式会社|^合同会社/,'')}の${co.person}です。\n${p.name}（${p.dateText||md(fromIso(p.showDate))}）の件で、スタッフへの前日確認に向けて、下記を確認させてください。\n\n${miss.map(m=>'・'+m).join('\n')}\n\nお手数ですが、${md(add(fromIso(zenDate(p)),-1))}までにいただけますと助かります。\nよろしくお願いいたします。`;
@@ -3390,18 +3429,18 @@ let calM=null, calSel=null;
 function renderCal(){ const t=today(), n=iso(t); if(!calM) calM=n.slice(0,7); if(!calSel) calSel=n;
   const [y,m]=calM.split('-').map(Number), first=new Date(y,m-1,1), start=add(first,-first.getDay());
   const ps=S.projects.filter(p=>p.kind!=='long');
-  const on=d=>ps.filter(p=>p.showDate<=d&&projEnd(p)>=d).sort((a,b)=>a.showDate.localeCompare(b.showDate));
+  const on=d=>ps.filter(p=>projOnDay(p,d)).sort((a,b)=>a.showDate.localeCompare(b.showDate));
   const dueN=d=>S.tasks.filter(k=>k.status!=='done'&&k.due===d).length;
-  const zenOn=d=>ps.filter(p=>needsZen(p)&&p.showDate>=n&&zenDate(p)===d);
+  const zenOn=d=>ps.filter(p=>needsZen(p)&&(hasSess(p)?p.sessions.some(x=>x.date>=n&&zenDate({showDate:x.date})===d):(p.showDate>=n&&zenDate(p)===d)));
   let h=`<div class="calv"><div class="calvh"><button type="button" data-act="calNav" data-d="-1" aria-label="前の月">‹</button><b>${y}年${m}月</b><button type="button" data-act="calNav" data-d="1" aria-label="次の月">›</button><button type="button" class="btn sm" data-act="calToday">今日</button></div>
   <div class="calvg">${[...WD].map((w,i)=>`<i class="${i===0?'sun':i===6?'sat':''}">${w}</i>`).join('')}`;
   for(let i=0;i<42;i++){ const d=add(start,i), v=iso(d); if(i>=35&&d.getMonth()!==m-1) break;
     const out=d.getMonth()!==m-1, hol=isHoliday(d), list=on(v), dn=dueN(v), zn=zenOn(v).length;
     h+=`<button type="button" class="cd ${out?'out':''} ${v===n?'td':''} ${v===calSel?'sel':''} ${d.getDay()===0||hol?'sun':d.getDay()===6?'sat':''}" data-act="calPick" data-d="${v}">
       <span class="dn">${d.getDate()}</span>
-      ${(()=>{ const span=p=>dd(fromIso(projEnd(p)),fromIso(p.showDate))+1; const lng=list.filter(p=>span(p)>7), sh=list.filter(p=>span(p)<=7);
+      ${(()=>{ const span=p=>hasSess(p)?1:dd(fromIso(projEnd(p)),fromIso(p.showDate))+1; const lng=list.filter(p=>span(p)>7), sh=list.filter(p=>span(p)<=7);
         return lng.slice(0,2).map(p=>`<span class="cl ${endedTag(p)?'end':''} ${p.showDate===v?'st':''} ${projEnd(p)===v?'en':''}" title="${esc(p.name)}">${p.showDate===v||d.getDay()===0||d.getDate()===1?esc(short(p)):''}</span>`).join('')
-          +sh.slice(0,2).map(p=>`<span class="cp ${endedTag(p)?'end':''} ${p.showDate===v?'st':''} ${projEnd(p)===v?'en':''}">${esc(short(p))}</span>`).join('')
+          +sh.slice(0,2).map(p=>{ const x=sessOn(p,v); return `<span class="cp ${endedTag(p)?'end':''} ${(x?x.date:p.showDate)===v?'st':''} ${(x?sessEnd(x):projEnd(p))===v?'en':''} ${x&&(x.tbd||!x.venue)?'tbd':''}">${esc(short(p))}</span>`; }).join('')
           +(sh.length>2||lng.length>2?`<span class="cmore">+${Math.max(0,sh.length-2)+Math.max(0,lng.length-2)}</span>`:''); })()}
       <span class="cdots">${zn?'<i class="z" title="前確"></i>':''}${dn?`<i class="k">${dn}</i>`:''}</span></button>`; }
   h+=`</div></div>`;
@@ -3409,8 +3448,9 @@ function renderCal(){ const t=today(), n=iso(t); if(!calM) calM=n.slice(0,7); if
   const d0=fromIso(calSel), list=on(calSel), zens=zenOn(calSel), ks=S.tasks.filter(k=>k.status!=='done'&&k.due===calSel);
   h+=`<div class="calday"><div class="caldh"><b>${d0.getMonth()+1}月${d0.getDate()}日（${WD[d0.getDay()]}）${isHoliday(d0)?'<small>祝日</small>':''}</b>
     <div><button type="button" class="btn sm primary" data-act="calAddProj" data-d="${calSel}">＋ 案件</button><button type="button" class="btn sm" data-act="calAddTask" data-d="${calSel}">＋ タスク</button></div></div>
-    ${list.length?`<div class="calsec"><span class="lb">本番</span>${list.map(p=>{ const m2=projMoney(p); return `<button type="button" class="calrow" data-act="gotoProj" data-pid="${p.id}"><b>${esc(p.name)}</b><span>${esc(p.dateText||md(fromIso(p.showDate)))}　${esc(cname(clientOf(p)))}${m2.sale?'　売上 '+yen(m2.sale):''}${endedTag(p)?'　'+endedTag(p):''}</span></button>`; }).join('')}</div>`:''}
-    ${zens.length?`<div class="calsec"><span class="lb">前確を送る日</span>${zens.map(p=>`<button type="button" class="calrow z" data-act="zen" data-pid="${p.id}"><b>${esc(short(p))}の前確</b><span>本番 ${md(fromIso(p.showDate))}</span></button>`).join('')}</div>`:''}
+    ${list.length?`<div class="calsec"><span class="lb">本番</span>${list.map(p=>{ const m2=projMoney(p), x=sessOn(p,calSel); return `<button type="button" class="calrow" data-act="gotoProj" data-pid="${p.id}"><b>${esc(p.name)}</b>${x?`<span class="sessl">${x.tbd||!x.venue?'<b class="tbd">場所未定</b>':'＠'+esc(x.venue)}${x.time?'　'+esc(x.time):''}</span><br>`:''}<span>${esc(p.dateText||md(fromIso(p.showDate)))}　${esc(cname(clientOf(p)))}${m2.sale?'　売上 '+yen(m2.sale):''}${endedTag(p)?'　'+endedTag(p):''}</span></button>`; }).join('')}</div>`:''}
+    ${zens.length?`<div class="calsec"><span class="lb">前確を送る日</span>${zens.flatMap(p=>hasSess(p)?p.sessions.filter(x=>x.date>=n&&zenDate({showDate:x.date})===calSel).map(x=>`<button type="button" class="calrow z" data-act="zen" data-pid="${p.id}" data-sid="${x.id}"><b>${esc(short(p))}の前確</b><span>${esc(sessLabel(x))}</span></button>`):[`<button type="button" class="calrow z" data-act="zen" data-pid="${p.id}"><b>${esc(short(p))}の前確</b><span>本番 ${md(fromIso(p.showDate))}</span></button>`]).join('')}</div>`:''}
+    <div class="calsec"><span class="lb">時間の予定</span>${dayTimeline(calSel,S.tasks.filter(k=>k.status!=='done'&&k.due===calSel),list)}</div>
     ${ks.length?`<div class="calsec"><span class="lb">期日のタスク</span>${list_(ks)}</div>`:''}
     ${!list.length&&!zens.length&&!ks.length?'<div class="empty">この日の予定はありません。「＋ 案件」「＋ タスク」からすぐ入れられます。</div>':''}</div>`;
   $('calView').innerHTML=h; }
@@ -3448,6 +3488,75 @@ function openQuickTask(d){ const ps=S.projects.filter(p=>p.kind!=='long'&&p.show
   $('qt-save').onclick=()=>{ const t=$('qt-t').value.trim(); if(!t){ toast('やることを入れてください'); return; } snap();
     S.tasks.push(mkTask({title:t,raw:t,projectId:$('qt-p').value||null,due:d,status:'todo',createdAt:Date.now()})); save(); closeSheet(); render(); toast('タスクを入れました',true); }; }
 
+/* =========================================================
+   複数日・複数現場の案件（1つの案件の中に「現場」を並べる）
+   ・現場ごとに 日付（〜最終日）・場所・時間・集合 を持てる。場所が未定の現場も置ける
+   ・手配の枠は現場にひも付けられる（現場ごとに手配先がバラバラでもOK）
+   ・請求は案件のまま（1件の請求書）
+   ・前確は現場ごとに送る日を計算して、現場ごとにタスクを置く
+   ========================================================= */
+function hasSess(p){ return !!(p&&Array.isArray(p.sessions)&&p.sessions.length); }
+function sessEnd(x){ return x.end&&x.end>=x.date?x.end:x.date; }
+function sessDays(x){ const out=[]; for(let d=fromIso(x.date);iso(d)<=sessEnd(x);d=add(d,1)) out.push(iso(d)); return out; }
+function sessLabel(x){ return `${x.end&&x.end>x.date?md(fromIso(x.date))+'〜'+md(fromIso(x.end)):md(fromIso(x.date))}${x.tbd||!x.venue?'　場所未定':'　'+x.venue}`; }
+function syncSess(p){ if(!hasSess(p)) return; p.sessions.sort((a,b)=>a.date.localeCompare(b.date)); const f=p.sessions[0].date, l=p.sessions.map(sessEnd).sort().slice(-1)[0];
+  p.showDate=f; p.dateText=(f===l?md(fromIso(f)):`${md(fromIso(f))}〜${md(fromIso(l))}`)+`（${p.sessions.length}現場）`; }
+function projOnDay(p,d){ if(hasSess(p)) return p.sessions.some(x=>x.date<=d&&sessEnd(x)>=d); return p.showDate<=d&&projEnd(p)>=d; }
+function sessOn(p,d){ return hasSess(p)?p.sessions.find(x=>x.date<=d&&sessEnd(x)>=d):null; }
+/* 「10/10(土)～11(日)＠みなと区民まつり」「9:45～16:45」のような文から現場を読む */
+function parseSessText(t){ const out=[]; const y=today().getFullYear(); const lines=String(t).normalize('NFKC').split(/\n/).map(x=>x.trim()).filter(Boolean);
+  lines.forEach(line=>{ const m=line.match(/(\d{1,2})\/(\d{1,2})(?:\([^)]*\))?(?:\s*[~〜～\-]\s*(?:(\d{1,2})\/)?(\d{1,2})(?:\([^)]*\))?)?\s*(?:[@＠]\s*(.*))?/);
+    const tm=line.match(/(\d{1,2})\s*[:：]\s*(\d{2})\s*[~〜～\-]\s*(\d{1,2})\s*[:：]\s*(\d{2})/);
+    if(m&&!tm){ let d=new Date(y,+m[1]-1,+m[2]); if(d<add(today(),-60)) d.setFullYear(y+1); let e='';
+      if(m[4]){ const em=m[3]?+m[3]:+m[1]; let ed=new Date(d.getFullYear(),em-1,+m[4]); if(ed<d) ed.setFullYear(ed.getFullYear()+1); e=iso(ed); }
+      const v=(m[5]||'').trim(); out.push({id:uid(),date:iso(d),end:e,venue:/未定/.test(v)?'':v,tbd:!v||/未定/.test(v),time:''}); }
+    else if(tm&&out.length){ out[out.length-1].time=`${+tm[1]}:${tm[2]}〜${+tm[3]}:${tm[4]}`; } });
+  return out; }
+function sessBlock(p){ if(!hasSess(p)) return `<button class="addslot" data-act="sessEdit" data-pid="${p.id}" data-sid="">＋ 現場（日程・場所）を分けて入れる</button>`;
+  return `<div class="slots sessbox"><div class="slh">現場・日程<span class="tot">${p.sessions.length}現場</span></div>
+  ${p.sessions.map(x=>{ const sl=(p.slots||[]).filter(s=>s.sessionId===x.id); return `<div class="sline" data-act="sessEdit" data-pid="${p.id}" data-sid="${x.id}" role="button" tabindex="0">
+    <div class="rn">${esc(x.end&&x.end>x.date?md(fromIso(x.date))+'〜'+md(fromIso(x.end)):md(fromIso(x.date)))}<small>${x.tbd||!x.venue?'<b class="tbd">場所未定</b>':esc(x.venue)}${x.time?'　'+esc(x.time):''}</small></div>
+    <div class="cnt">${sl.length?esc([...new Set(sl.map(s=>s.vendor||'手配先未定'))].join('・')):''}</div></div>`; }).join('')}
+  <div style="display:flex"><button class="addslot" data-act="sessEdit" data-pid="${p.id}" data-sid="">＋ 現場を追加</button><button class="addslot" data-act="sessPaste" data-pid="${p.id}">スケジュールを貼って追加</button></div></div>`; }
+function openSessEdit(pid,sid){ const p=P(pid); if(!p) return; p.sessions=p.sessions||[]; const x=sid?p.sessions.find(y=>y.id===sid):null; const d=x||{date:p.showDate||iso(today()),end:'',venue:'',time:'',tbd:false};
+  openSheet(`<h3>${x?'現場を直す':'現場を追加'}　<span style="font-weight:400;color:var(--sub);font-size:14px">${esc(short(p))}</span></h3>
+  <div class="row2"><div class="fld"><label for="se-d">日付</label><input id="se-d" type="date" data-nonull="1" value="${d.date}"></div><div class="fld"><label for="se-e">最終日（複数日のとき）</label><input id="se-e" type="date" value="${d.end||''}"></div></div>
+  <div class="fld"><label for="se-v">場所</label><input id="se-v" value="${esc(d.venue||'')}" placeholder="例：みなと区民まつり（芝公園）"></div>
+  <label class="chk" style="padding:8px 10px"><input type="checkbox" id="se-tbd" ${d.tbd?'checked':''}><span>場所はまだ決まっていない（決まったら直す）</span></label>
+  <div class="row2"><div class="fld"><label for="se-t">勤務時間</label><input id="se-t" value="${esc(d.time||'')}" placeholder="例：9:45〜16:45"></div><div class="fld"><label for="se-c">集合時間</label><input id="se-c" value="${esc(d.callTime||'')}" placeholder="例：9:30"></div></div>
+  <div class="fld"><label for="se-cp">集合場所</label><input id="se-cp" value="${esc(d.callPlace||'')}"></div>
+  <div class="fld"><label for="se-ct">集合担当・当日の連絡先</label><input id="se-ct" value="${esc(d.contact||'')}"></div>
+  <div class="acts">${x?'<button class="btn danger" id="se-del">この現場を消す</button>':'<span></span>'}<div style="display:flex;gap:8px"><button class="btn" id="se-close">閉じる</button><button class="btn primary" id="se-save">保存</button></div></div>
+  <p class="hint">手配先がこの現場だけ違うときは、「手配とお金」で手配の行の「現場」を選んでください。請求は、この案件1件としてまとめて出します。</p>`);
+  $('se-close').onclick=closeSheet;
+  $('se-save').onclick=()=>{ snap(); const o=x||{id:uid()}; Object.assign(o,{date:$('se-d').value||d.date,end:$('se-e').value&&$('se-e').value>($('se-d').value||d.date)?$('se-e').value:'',venue:$('se-v').value.trim(),tbd:$('se-tbd').checked||!$('se-v').value.trim(),time:$('se-t').value.trim(),callTime:$('se-c').value.trim(),callPlace:$('se-cp').value.trim(),contact:$('se-ct').value.trim()});
+    if(!x) p.sessions.push(o); syncSess(p); save(); closeSheet(); render(); toast('現場を保存しました',true); };
+  if($('se-del')) $('se-del').onclick=()=>{ if(!confirm('この現場を消しますか？（ひも付いた手配の枠は「全日程」に戻ります）')) return; snap(); p.sessions=p.sessions.filter(y=>y!==x); (p.slots||[]).forEach(s=>{ if(s.sessionId===x.id) s.sessionId=''; }); if(!p.sessions.length) delete p.sessions; else syncSess(p); save(); closeSheet(); render(); toast('消しました',true); }; }
+function openSessPaste(pid){ const p=P(pid); if(!p) return;
+  openSheet(`<h3>スケジュールを貼って現場を入れる</h3><p class="hint" style="margin-top:0">元請けから来たスケジュールをそのまま貼ってください。「10/10(土)～11(日)＠みなと区民まつり」の行と、その下の「9:45～16:45」の行を読みます。場所が未定の日は「10/11＠未定」と書けば入ります。</p>
+  <textarea id="sp-t" class="copyarea" style="min-height:180px" placeholder="10/10(土)～11(日)＠みなと区民まつり&#10;9：45～16：45"></textarea><div id="sp-pv" class="pvlist" style="margin-top:8px"></div>
+  <div class="acts"><button class="btn" id="sp-close">閉じる</button><button class="btn primary" id="sp-go">この内容で入れる</button></div>`);
+  const pv=()=>{ const xs=parseSessText($('sp-t').value); $('sp-pv').innerHTML=xs.map(x=>`<div><b>${esc(sessLabel(x).split('　')[0])}</b><span>${esc(x.venue||'場所未定')}${x.time?'　'+esc(x.time):''}</span></div>`).join('')||'<div><span>まだ読み取れる日程がありません</span></div>'; };
+  $('sp-t').addEventListener('input',pv); $('sp-close').onclick=closeSheet;
+  $('sp-go').onclick=()=>{ const xs=parseSessText($('sp-t').value); if(!xs.length){ toast('日程が読み取れませんでした'); return; } snap(); p.sessions=(p.sessions||[]).concat(xs); syncSess(p); save(); closeSheet(); render(); toast(`現場を${xs.length}件入れました`,true); }; }
+
+/* =========================================================
+   時間の予定（打ち合わせなど）：タスクに時刻を持たせ、カレンダーの日の中を時間で見る
+   ========================================================= */
+function parseTime(t){ const m=String(t).normalize('NFKC').match(/(\d{1,2})\s*(?::|時(?!間))\s*(\d{2})?\s*分?(?:\s*[~〜～\-]\s*(\d{1,2})\s*(?::|時(?!間))\s*(\d{2})?)?/); if(!m) return null;
+  const h=+m[1]; if(h>23) return null; const s=`${String(h).padStart(2,'0')}:${m[2]||'00'}`; const e=m[3]!==undefined&&+m[3]<=24?`${String(+m[3]).padStart(2,'0')}:${m[4]||'00'}`:''; return {time:s,endTime:e,src:m[0]}; }
+function tmin(s){ const m=String(s||'').match(/(\d{1,2}):(\d{2})/); return m?+m[1]*60+ +m[2]:null; }
+function dayTimeline(d,tasks,projs){ const items=[];
+  tasks.filter(k=>k.time).forEach(k=>{ const a=tmin(k.time), b=tmin(k.endTime)||a+60; items.push({a,b,label:k.title,cls:'tk',act:`data-act="open" data-id="${k.id}"`}); });
+  projs.forEach(p=>{ const x=sessOn(p,d); const tt=String((x&&x.time)||p.workTime||'').normalize('NFKC').match(/(\d{1,2})\s*[:：]\s*(\d{2})\s*[~〜～\-]\s*(\d{1,2})\s*[:：]\s*(\d{2})/);
+    if(tt){ items.push({a:+tt[1]*60+ +tt[2],b:+tt[3]*60+ +tt[4],label:`${short(p)}${x&&x.venue?'＠'+x.venue:''}`,cls:'pj',act:`data-act="gotoProj" data-pid="${p.id}"`}); } });
+  if(!items.length) return '<p class="hint">時間の決まった予定はありません。タスクに「14:00」のように時刻を書くと、ここに並びます。</p>';
+  const lo=Math.max(0,Math.min(8*60,...items.map(i=>i.a))-0), hi=Math.min(24*60,Math.max(19*60,...items.map(i=>i.b))); const H0=Math.floor(lo/60), H1=Math.ceil(hi/60), PX=44;
+  // 重なる予定は横に並べる
+  items.sort((x,y)=>x.a-y.a); const lanes=[]; items.forEach(i=>{ let L=lanes.findIndex(e=>e<=i.a); if(L<0){ L=lanes.length; lanes.push(0); } lanes[L]=i.b; i.lane=L; }); const NL=Math.max(1,lanes.length);
+  return `<div class="dtl" style="height:${(H1-H0)*PX}px">${Array.from({length:H1-H0},(_,i)=>`<div class="dth" style="top:${i*PX}px"><span>${H0+i}:00</span></div>`).join('')}
+    ${items.map(i=>`<button type="button" class="dti ${i.cls}" ${i.act} style="top:${(i.a/60-H0)*PX}px;height:${Math.max(22,(i.b-i.a)/60*PX-2)}px;left:calc(46px + (100% - 50px) * ${i.lane}/${NL});width:calc((100% - 50px) / ${NL} - 3px)"><b>${String(Math.floor(i.a/60)).padStart(2,'0')}:${String(i.a%60).padStart(2,'0')}</b> ${esc(i.label)}</button>`).join('')}</div>`; }
+
 function openSearch(){
   openSheet(`<h3>さがす</h3><div class="search"><input id="q" type="search" placeholder="タスク名、案件名、メモ、経費で検索" aria-label="検索"></div><div id="qres" style="margin-top:12px"></div>`);
   const q=$('q'); setTimeout(()=>q.focus(),250);
@@ -3469,7 +3578,7 @@ $('seeBtn').onclick=()=>{ $('toast').classList.remove('on'); moneyPeriod='month'
 let tt; function toast(m,undo){ $('seeBtn').hidden=!expToast; expToast=false; $('toastMsg').textContent=m; $('undoBtn').hidden=!(undo&&undoSnap); $('toast').classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>$('toast').classList.remove('on'),undo?4000:2200); }
 (function(){ const d=new Date(); $('hDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 '+WD[d.getDay()]+'曜日'; })();
 
-const APP_VER='2026.09.29t';
+const APP_VER='2026.10.03a';
 window.__dandori={get S(){ return S; }};
 /* PC向けのキー操作：/ または Ctrl+K で入力欄へ、1〜5でタブ切り替え */
 document.addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); const typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
